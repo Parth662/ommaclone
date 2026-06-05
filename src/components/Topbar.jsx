@@ -1,6 +1,6 @@
 import React from "react";
 
-export default function Topbar({ title }) {
+export default function Topbar({ title, onUpgrade }) {
   return (
     <div className="topbar">
       <div className="topbar-left">
@@ -9,7 +9,11 @@ export default function Topbar({ title }) {
         <span className="breadcrumb-active">{title}</span>
       </div>
       <div className="topbar-right">
-        <div className="credits-badge">
+        <div
+          className="credits-badge credits-badge-clickable"
+          onClick={onUpgrade}
+          title="Upgrade plan"
+        >
           <div className="credits-dot" />
           0 credits
         </div>

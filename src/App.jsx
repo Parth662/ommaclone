@@ -3,6 +3,7 @@ import "./App.css";
 import Sidebar from "./components/Sidebar.jsx";
 import Topbar from "./components/Topbar.jsx";
 import ChatView from "./components/ChatView.jsx";
+import UpgradeModal from "./components/UpgradeModal.jsx";
 import Landing from "./pages/Landing.jsx";
 import Discover from "./pages/Discover.jsx";
 import MyChats from "./pages/mychats.jsx";
@@ -98,6 +99,7 @@ export default function App() {
   const [activePage, setActivePage] = useState("landing");
   const [chatOpen, setChatOpen] = useState(false);
   const [chatMessages, setChatMessages] = useState([]);
+  const [showUpgrade, setShowUpgrade] = useState(false);
 
   const handleOpenChat = (context, initialPrompt) => {
     const msgs = buildInitialChatMessages(context);
@@ -115,7 +117,6 @@ export default function App() {
 
   const handleBack = () => {
     setChatOpen(false);
-    // If the chat was opened from chats page, go back to chats, otherwise discover
     if (activePage === "chats") {
       setActivePage("chats");
     } else {
@@ -135,9 +136,15 @@ export default function App() {
         activePage={chatOpen ? "chat" : activePage}
         onNavigate={handleNavigate}
         onOpenChat={handleOpenChat}
+        onUpgrade={() => setShowUpgrade(true)}
       />
       <div className="main">
-        {(!chatOpen && activePage === "chats") ? null : <Topbar title={currentTitle} />}
+        {(!chatOpen && activePage === "chats") ? null : (
+          <Topbar
+            title={currentTitle}
+            onUpgrade={() => setShowUpgrade(true)}
+          />
+        )}
 
         {chatOpen ? (
           <ChatView
@@ -167,6 +174,10 @@ export default function App() {
           </>
         )}
       </div>
+
+      {showUpgrade && (
+        <UpgradeModal onClose={() => setShowUpgrade(false)} />
+      )}
     </>
   );
 }
