@@ -1,0 +1,553 @@
+/* Scoped Login Stylesheet */
+.omma-login {
+  --void-black: #000000;
+  --surface-glass: rgba(10, 10, 12, 0.45);
+  --border: rgba(255, 255, 255, 0.08);
+  --border-active: rgba(255, 255, 255, 0.2);
+  --text-primary: #f4f4f5;
+  --text-secondary: #a1a1aa;
+  --text-muted: #52525b;
+  --neon-cyan: #00F0FF;
+  --neon-purple: #BC00FF;
+
+  position: relative;
+  min-height: 100vh;
+  width: 100%;
+  background-color: var(--void-black);
+  color: var(--text-primary);
+  font-family: 'Inter', sans-serif;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.omma-login *,
+.omma-login *::before,
+.omma-login *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* Background Canvas */
+.omma-login .login-bg-canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* Ambient Backlight Glows */
+.omma-login .login-glow-purple {
+  position: absolute;
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle, rgba(188, 0, 255, 0.08) 0%, transparent 70%);
+  top: 15%;
+  left: 20%;
+  z-index: 1;
+  pointer-events: none;
+  filter: blur(60px);
+}
+
+.omma-login .login-glow-cyan {
+  position: absolute;
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle, rgba(0, 240, 255, 0.08) 0%, transparent 70%);
+  bottom: 15%;
+  right: 20%;
+  z-index: 1;
+  pointer-events: none;
+  filter: blur(60px);
+}
+
+/* Localized glass card glows (placed directly behind card inside container) */
+.omma-login .login-card-glow-purple {
+  position: absolute;
+  width: 320px;
+  height: 320px;
+  background: radial-gradient(circle, rgba(188, 0, 255, 0.16) 0%, transparent 70%);
+  top: -60px;
+  left: -60px;
+  z-index: 1;
+  filter: blur(40px);
+  pointer-events: none;
+  animation: float-slow-1 12s ease-in-out infinite;
+}
+
+.omma-login .login-card-glow-cyan {
+  position: absolute;
+  width: 320px;
+  height: 320px;
+  background: radial-gradient(circle, rgba(0, 240, 255, 0.14) 0%, transparent 70%);
+  bottom: -60px;
+  right: -60px;
+  z-index: 1;
+  filter: blur(40px);
+  pointer-events: none;
+  animation: float-slow-2 12s ease-in-out infinite;
+}
+
+@keyframes float-slow-1 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(30px, 20px) scale(1.1); }
+}
+
+@keyframes float-slow-2 {
+  0%, 100% { transform: translate(0, 0) scale(1.1); }
+  50% { transform: translate(-30px, -20px) scale(0.9); }
+}
+
+/* Card Container */
+.omma-login .login-card-container {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  width: 100%;
+  max-width: 440px;
+  padding: 24px;
+}
+
+/* Back Button */
+.omma-login .btn-back-home {
+  align-self: flex-start;
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 13.5px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+
+.omma-login .btn-back-home:hover {
+  color: var(--text-primary);
+  transform: translateX(-2px);
+}
+
+.omma-login .btn-back-home svg {
+  transition: transform 0.2s ease;
+}
+
+.omma-login .btn-back-home:hover svg {
+  transform: translateX(-2px);
+}
+
+/* Glass Card */
+.omma-login .login-card {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.01) 100%), rgba(10, 10, 12, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 20px;
+  padding: 48px 40px;
+  backdrop-filter: blur(45px);
+  -webkit-backdrop-filter: blur(45px);
+  box-shadow: 
+    inset 0 1px 1px rgba(255, 255, 255, 0.25),
+    inset 0 10px 20px rgba(255, 255, 255, 0.02),
+    0 30px 70px rgba(0, 0, 0, 0.7), 
+    0 0 100px rgba(0, 240, 255, 0.02),
+    0 0 100px rgba(188, 0, 255, 0.02);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+/* Brand Section */
+.omma-login .login-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 12px;
+}
+
+.omma-login .brand-logo-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.01) 100%);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-primary);
+  box-shadow: 
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    0 8px 20px rgba(0, 0, 0, 0.25);
+}
+
+.omma-login .brand-logo-icon svg {
+  background: linear-gradient(135deg, var(--neon-cyan) 0%, var(--neon-purple) 100%);
+  /* Apply gradient to stroke */
+  stroke: url(#logo-grad); /* Fallback to standard color first */
+  color: var(--neon-cyan);
+}
+
+.omma-login .brand-title {
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+  background: linear-gradient(to right, #ffffff, #d4d4d8);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.omma-login .brand-subtitle {
+  font-size: 13.5px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  max-width: 320px;
+}
+
+/* Forms */
+.omma-login .login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.omma-login .input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.omma-login .input-group label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+}
+
+.omma-login .login-input {
+  width: 100%;
+  background-color: rgba(255, 255, 255, 0.02);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 13.5px 16px;
+  color: var(--text-primary);
+  font-size: 14.5px;
+  outline: none;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.05), 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+.omma-login .login-input::placeholder {
+  color: var(--text-muted);
+}
+
+.omma-login .login-input:focus {
+  border-color: rgba(0, 240, 255, 0.4);
+  background-color: rgba(255, 255, 255, 0.05);
+  box-shadow: 
+    inset 0 1px 1px rgba(255, 255, 255, 0.1), 
+    0 0 20px rgba(0, 240, 255, 0.12);
+}
+
+.omma-login .login-input.input-error {
+  border-color: rgba(239, 68, 68, 0.5);
+  box-shadow: 0 0 12px rgba(239, 68, 68, 0.08);
+}
+
+.omma-login .input-error-msg {
+  font-size: 12px;
+  color: #ef4444;
+  margin-top: 4px;
+}
+
+/* Submit Button */
+.omma-login .btn-login-submit {
+  width: 100%;
+  background: linear-gradient(135deg, rgba(0, 240, 255, 0.2) 0%, rgba(188, 0, 255, 0.2) 100%);
+  backdrop-filter: blur(12px);
+  color: var(--text-primary);
+  border: 1px solid rgba(0, 240, 255, 0.25);
+  border-radius: 10px;
+  padding: 13.5px;
+  font-weight: 700;
+  font-size: 14.5px;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.15), 0 4px 15px rgba(0, 240, 255, 0.1);
+}
+
+.omma-login .btn-login-submit:hover {
+  transform: translateY(-1.5px);
+  background: linear-gradient(135deg, rgba(0, 240, 255, 0.3) 0%, rgba(188, 0, 255, 0.3) 100%);
+  border-color: rgba(0, 240, 255, 0.4);
+  box-shadow: 
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    0 8px 25px rgba(0, 240, 255, 0.18),
+    0 0 20px rgba(188, 0, 255, 0.12);
+}
+
+.omma-login .btn-login-submit:active {
+  transform: scale(0.985);
+}
+
+/* Divider */
+.omma-login .auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+}
+
+.omma-login .divider-line {
+  flex: 1;
+  height: 1px;
+  background-color: var(--border);
+}
+
+.omma-login .divider-text {
+  font-size: 10.5px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+}
+
+/* Google Login Button */
+.omma-login .btn-google-login {
+  width: 100%;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.01) 100%);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--text-primary);
+  border-radius: 10px;
+  padding: 13.5px;
+  font-weight: 600;
+  font-size: 14.5px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.15), 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.omma-login .btn-google-login:hover {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.03) 100%);
+  border-color: rgba(255, 255, 255, 0.16);
+  transform: translateY(-1.5px);
+  box-shadow: 
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    0 8px 25px rgba(0, 0, 0, 0.35);
+}
+
+.omma-login .btn-google-login:active {
+  transform: scale(0.985);
+}
+
+.omma-login .google-icon {
+  flex-shrink: 0;
+}
+
+/* Loader Animation Views */
+.omma-login .login-loading-view {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 0;
+  gap: 36px;
+  animation: loading-fade-in 0.3s ease;
+}
+
+@keyframes loading-fade-in {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.omma-login .auth-spinner {
+  position: relative;
+  width: 72px;
+  height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.omma-login .spinner-outer {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border: 3px solid transparent;
+  border-top-color: var(--neon-cyan);
+  border-bottom-color: var(--neon-cyan);
+  border-radius: 50%;
+  animation: spin-clockwise 1.2s cubic-bezier(0.5, 0.1, 0.5, 0.9) infinite;
+}
+
+.omma-login .spinner-inner {
+  position: absolute;
+  width: 76%;
+  height: 76%;
+  border: 3px solid transparent;
+  border-left-color: var(--neon-purple);
+  border-right-color: var(--neon-purple);
+  border-radius: 50%;
+  animation: spin-counter-clockwise 1s cubic-bezier(0.5, 0.1, 0.5, 0.9) infinite;
+}
+
+.omma-login .spinner-icon {
+  font-size: 22px;
+  color: var(--neon-cyan);
+  filter: drop-shadow(0 0 8px rgba(0, 240, 255, 0.5));
+  animation: pulse-glow 1.5s ease-in-out infinite;
+}
+
+@keyframes spin-clockwise {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes spin-counter-clockwise {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(-360deg); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { opacity: 0.7; transform: scale(0.95); }
+  50% { opacity: 1; transform: scale(1.08); }
+}
+
+.omma-login .loading-status-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+}
+
+.omma-login .loading-status {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+  text-align: center;
+  height: 20px;
+}
+
+.omma-login .progress-bar-container {
+  width: 200px;
+  height: 3px;
+  background-color: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.omma-login .progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(to right, var(--neon-cyan), var(--neon-purple));
+  border-radius: 10px;
+  transition: width 0.3s ease;
+}
+
+/* Responsiveness */
+@media (max-width: 479px) {
+  .omma-login .login-card {
+    padding: 36px 24px;
+    gap: 24px;
+  }
+  .omma-login .login-brand .brand-title {
+    font-size: 20px;
+  }
+}
+
+/* --- OTP Code Screen Styles --- */
+.omma-login .otp-container {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  margin: 12px 0 6px;
+}
+
+.omma-login .otp-input {
+  width: 46px;
+  height: 52px;
+  background-color: rgba(255, 255, 255, 0.02);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  color: var(--text-primary);
+  font-size: 22px;
+  font-weight: 700;
+  text-align: center;
+  outline: none;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.05), 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+.omma-login .otp-input:focus {
+  border-color: rgba(0, 240, 255, 0.4);
+  background-color: rgba(255, 255, 255, 0.05);
+  box-shadow: 
+    inset 0 1px 1px rgba(255, 255, 255, 0.1), 
+    0 0 20px rgba(0, 240, 255, 0.12);
+}
+
+.omma-login .text-center {
+  text-align: center;
+}
+
+.omma-login .resend-container {
+  text-align: center;
+  font-size: 13px;
+  margin-top: 4px;
+}
+
+.omma-login .resend-link {
+  color: var(--neon-cyan);
+  cursor: pointer;
+  font-weight: 600;
+  transition: color 0.15s ease;
+}
+
+.omma-login .resend-link:hover {
+  text-decoration: underline;
+  color: #8dfcff;
+}
+
+.omma-login .resend-timer {
+  color: var(--text-muted);
+}
+
+.omma-login .change-email-container {
+  text-align: center;
+  margin-top: 12px;
+}
+
+.omma-login .change-email-btn {
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  transition: color 0.15s ease;
+}
+
+.omma-login .change-email-btn:hover {
+  color: var(--text-primary);
+}

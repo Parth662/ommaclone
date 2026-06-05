@@ -35,13 +35,49 @@ export const AI_RESPONSES = {
   "default": "Great idea! I'm analyzing your request and generating the perfect solution for you. Give me a moment to craft something exceptional. ✨",
 };
 
-export function getAIResponse(msg) {
+export function getAIResponse(msg, attachments = []) {
+  let baseResponse = "";
   const m = msg.toLowerCase();
-  if (m.includes("3d") || m.includes("three") || m.includes("webgl")) return AI_RESPONSES["3d"];
-  if (m.includes("dashboard") || m.includes("chart") || m.includes("data")) return AI_RESPONSES["dashboard"];
-  if (m.includes("landing") || m.includes("page") || m.includes("site")) return AI_RESPONSES["landing"];
-  if (m.includes("particle")) return AI_RESPONSES["particle"];
-  if (m.includes("shader") || m.includes("glsl")) return AI_RESPONSES["shader"];
-  if (m.includes("game")) return AI_RESPONSES["game"];
-  return AI_RESPONSES["default"];
+  
+  if (m.includes("3d") || m.includes("three") || m.includes("webgl")) {
+    baseResponse = AI_RESPONSES["3d"];
+  } else if (m.includes("dashboard") || m.includes("chart") || m.includes("data")) {
+    baseResponse = AI_RESPONSES["dashboard"];
+  } else if (m.includes("landing") || m.includes("page") || m.includes("site")) {
+    baseResponse = AI_RESPONSES["landing"];
+  } else if (m.includes("particle")) {
+    baseResponse = AI_RESPONSES["particle"];
+  } else if (m.includes("shader") || m.includes("glsl")) {
+    baseResponse = AI_RESPONSES["shader"];
+  } else if (m.includes("game")) {
+    baseResponse = AI_RESPONSES["game"];
+  } else {
+    baseResponse = AI_RESPONSES["default"];
+  }
+
+  if (attachments && attachments.length > 0) {
+    const listNames = attachments.map(a => `<strong>${a.name}</strong>`).join(", ");
+    let analysisMsg = "";
+    
+    // Check main attachment types to make the text specific
+    const hasPhoto = attachments.some(a => a.type === "photo");
+    const hasDoc = attachments.some(a => a.type === "document");
+    const hasUrl = attachments.some(a => a.type === "url");
+    
+    if (hasPhoto && hasDoc && hasUrl) {
+      analysisMsg = `I've successfully received and analyzed your photo layouts, structured document data, and reference URLs: ${listNames}. Let's merge these assets into a single system!`;
+    } else if (hasPhoto) {
+      analysisMsg = `Analyzing your attached visual asset (${listNames}). I will extract its layout hierarchy, typography details, and color palette to craft a matching design concept.`;
+    } else if (hasDoc) {
+      analysisMsg = `I've parsed the structure of your uploaded document (${listNames}). I see key data points and system requirements that we can map directly to our layouts.`;
+    } else if (hasUrl) {
+      analysisMsg = `I've indexed the reference details from your attached link (${listNames}). Let's build your experience inspired by this resource.`;
+    } else {
+      analysisMsg = `I've received your attachments: ${listNames}. Scanning their design parameters now...`;
+    }
+    
+    return `${analysisMsg}<br/><br/>Based on that: ${baseResponse}`;
+  }
+
+  return baseResponse;
 }

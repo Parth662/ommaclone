@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useRef } from "react";
 import "./Landing.css";
 
-export default function Landing({ onBack }) {
+export default function Landing({ onBack, onNavigate }) {
 	const [shrinkHeader, setShrinkHeader] = useState(false);
 	const [promptValue, setPromptValue] = useState("");
-	const imgRef = useRef(null);
+	const canvasRef = useRef(null);
 
 	// Shrink header on scroll
 	useEffect(() => {
@@ -19,17 +19,259 @@ export default function Landing({ onBack }) {
 		return () => window.removeEventListener("scroll", handleScroll);
 	}, []);
 
-	// Parallax mouse move effect on the hero preview image
+	// High-performance interactive 3D grid and wireframe animation
 	useEffect(() => {
+		if (!canvasRef.current) return;
+		const canvas = canvasRef.current;
+		const ctx = canvas.getContext("2d");
+		let animationFrameId;
+
+		let width = (canvas.width = canvas.offsetWidth);
+		let height = (canvas.height = canvas.offsetHeight);
+
+		const handleResize = () => {
+			if (!canvas) return;
+			width = canvas.width = canvas.offsetWidth;
+			height = canvas.height = canvas.offsetHeight;
+		};
+		window.addEventListener("resize", handleResize);
+
+		// Camera and mouse settings
+		let mouseX = 0;
+		let mouseY = 0;
+		let targetRotX = 0.25;
+		let targetRotY = 0.4;
+		let rotX = 0.25;
+		let rotY = 0.4;
+
 		const handleMouseMove = (e) => {
-			if (!imgRef.current) return;
-			const amount = 20;
-			const x = (e.clientX / window.innerWidth - 0.5) * amount;
-			const y = (e.clientY / window.innerHeight - 0.5) * amount;
-			imgRef.current.style.transform = `translate(${x}px, ${y}px) scale(1.05)`;
+			mouseX = (e.clientX / window.innerWidth) - 0.5;
+			mouseY = (e.clientY / window.innerHeight) - 0.5;
 		};
 		window.addEventListener("mousemove", handleMouseMove);
-		return () => window.removeEventListener("mousemove", handleMouseMove);
+
+		// Generative 3D Wireframe buildings representing architectural construction
+		const blocks = [
+			{ x: 0, z: 0, w: 140, h: 360, d: 140 },
+			{ x: -280, z: -150, w: 180, h: 220, d: 180 },
+			{ x: 280, z: 150, w: 160, h: 280, d: 160 },
+			{ x: -180, z: 350, w: 220, h: 180, d: 220 },
+			{ x: 180, z: -250, w: 120, h: 140, d: 120 },
+			{ x: -450, z: 100, w: 100, h: 120, d: 100 },
+			{ x: 450, z: -100, w: 100, h: 160, d: 100 }
+		];
+
+		// Floating data nodes (particles)
+		const particles = [];
+		const particleCount = 60;
+		const groundY = 150;
+
+		for (let i = 0; i < particleCount; i++) {
+			particles.push({
+				x: (Math.random() - 0.5) * 1400,
+				y: groundY - Math.random() * 500,
+				z: (Math.random() - 0.5) * 1400,
+				speed: 0.3 + Math.random() * 0.9,
+				size: 1 + Math.random() * 1.5,
+				brightness: 0.2 + Math.random() * 0.8
+			});
+		}
+
+		const cameraDistance = 900;
+		const fov = 650;
+		const gridSize = 14;
+		const gridSpacing = 80;
+
+		// 3D Rotation helper
+		const rotate3D = (x, y, z, angleX, angleY) => {
+			const cosY = Math.cos(angleY);
+			const sinY = Math.sin(angleY);
+			const x1 = x * cosY - z * sinY;
+			const z1 = x * sinY + z * cosY;
+
+			const cosX = Math.cos(angleX);
+			const sinX = Math.sin(angleX);
+			const y2 = y * cosX - z1 * sinX;
+			const z2 = y * sinX + z1 * cosX;
+
+			return { x: x1, y: y2, z: z2 };
+		};
+
+		const render = () => {
+			if (!ctx) return;
+			ctx.clearRect(0, 0, width, height);
+
+			// Smooth rot interpolation
+			targetRotY = mouseX * 0.7;
+			targetRotX = 0.25 + mouseY * 0.35;
+			rotX += (targetRotX - rotX) * 0.05;
+			rotY += (targetRotY - rotY) * 0.05;
+
+			const centerX = width / 2;
+			const centerY = height / 2 + 80;
+
+			// --- Ground Grid ---
+			ctx.strokeStyle = "rgba(0, 240, 255, 0.18)";
+			ctx.lineWidth = 1;
+
+			// Z lines
+			for (let x = -gridSize / 2; x <= gridSize / 2; x++) {
+				ctx.beginPath();
+				let first = true;
+				for (let z = -gridSize / 2; z <= gridSize / 2; z++) {
+					const px = x * gridSpacing;
+					const pz = z * gridSpacing;
+					const rotated = rotate3D(px, groundY, pz, rotX, rotY);
+					const scale = fov / (rotated.z + cameraDistance);
+					if (scale > 0) {
+						const sx = rotated.x * scale + centerX;
+						const sy = rotated.y * scale + centerY;
+						if (first) {
+							ctx.moveTo(sx, sy);
+							first = false;
+						} else {
+							ctx.lineTo(sx, sy);
+						}
+					}
+				}
+				ctx.stroke();
+			}
+
+			// X lines
+			for (let z = -gridSize / 2; z <= gridSize / 2; z++) {
+				ctx.beginPath();
+				let first = true;
+				for (let x = -gridSize / 2; x <= gridSize / 2; x++) {
+					const px = x * gridSpacing;
+					const pz = z * gridSpacing;
+					const rotated = rotate3D(px, groundY, pz, rotX, rotY);
+					const scale = fov / (rotated.z + cameraDistance);
+					if (scale > 0) {
+						const sx = rotated.x * scale + centerX;
+						const sy = rotated.y * scale + centerY;
+						if (first) {
+							ctx.moveTo(sx, sy);
+							first = false;
+						} else {
+							ctx.lineTo(sx, sy);
+						}
+					}
+				}
+				ctx.stroke();
+			}
+
+			// --- Architectural Wireframes ---
+			blocks.forEach((block) => {
+				const x0 = block.x - block.w / 2;
+				const x1 = block.x + block.w / 2;
+				const y0 = groundY;
+				const y1 = groundY - block.h;
+				const z0 = block.z - block.d / 2;
+				const z1 = block.z + block.d / 2;
+
+				const vertices = [
+					{ x: x0, y: y0, z: z0 },
+					{ x: x1, y: y0, z: z0 },
+					{ x: x1, y: y1, z: z0 },
+					{ x: x0, y: y1, z: z0 },
+					{ x: x0, y: y0, z: z1 },
+					{ x: x1, y: y0, z: z1 },
+					{ x: x1, y: y1, z: z1 },
+					{ x: x0, y: y1, z: z1 }
+				];
+
+				const projected = vertices.map((v) => {
+					const rotated = rotate3D(v.x, v.y, v.z, rotX, rotY);
+					const scale = fov / (rotated.z + cameraDistance);
+					return {
+						x: rotated.x * scale + centerX,
+						y: rotated.y * scale + centerY,
+						z: rotated.z,
+						visible: scale > 0
+					};
+				});
+
+				const edges = [
+					[0, 1], [1, 2], [2, 3], [3, 0], // Front face
+					[4, 5], [5, 6], [6, 7], [7, 4], // Back face
+					[0, 4], [1, 5], [2, 6], [3, 7]  // Pillars
+				];
+
+				ctx.lineWidth = 1;
+				edges.forEach(([pA, pB]) => {
+					const vA = projected[pA];
+					const vB = projected[pB];
+					if (vA.visible && vB.visible) {
+						const avgZ = (vA.z + vB.z) / 2;
+						const alpha = Math.max(0.01, 1 - (avgZ + 500) / 1600);
+						ctx.strokeStyle = `rgba(0, 240, 255, ${alpha * 0.35})`;
+						ctx.beginPath();
+						ctx.moveTo(vA.x, vA.y);
+						ctx.lineTo(vB.x, vB.y);
+						ctx.stroke();
+					}
+				});
+
+				// Top cap face glow
+				const topFace = [3, 2, 6, 7];
+				if (topFace.every((idx) => projected[idx].visible)) {
+					const avgZ = topFace.reduce((sum, idx) => sum + projected[idx].z, 0) / 4;
+					const alpha = Math.max(0.01, 1 - (avgZ + 500) / 1600);
+
+					ctx.fillStyle = `rgba(188, 0, 255, ${alpha * 0.08})`;
+					ctx.beginPath();
+					ctx.moveTo(projected[topFace[0]].x, projected[topFace[0]].y);
+					for (let i = 1; i < topFace.length; i++) {
+						ctx.lineTo(projected[topFace[i]].x, projected[topFace[i]].y);
+					}
+					ctx.closePath();
+					ctx.fill();
+
+					ctx.strokeStyle = `rgba(188, 0, 255, ${alpha * 0.5})`;
+					ctx.beginPath();
+					ctx.moveTo(projected[topFace[0]].x, projected[topFace[0]].y);
+					for (let i = 1; i < topFace.length; i++) {
+						ctx.lineTo(projected[topFace[i]].x, projected[topFace[i]].y);
+					}
+					ctx.closePath();
+					ctx.stroke();
+				}
+			});
+
+			// --- Draw Particles ---
+			particles.forEach((p) => {
+				p.y -= p.speed;
+				if (p.y < groundY - 500) {
+					p.y = groundY;
+					p.x = (Math.random() - 0.5) * 1400;
+					p.z = (Math.random() - 0.5) * 1400;
+				}
+
+				const rotated = rotate3D(p.x, p.y, p.z, rotX, rotY);
+				const scale = fov / (rotated.z + cameraDistance);
+				if (scale > 0) {
+					const sx = rotated.x * scale + centerX;
+					const sy = rotated.y * scale + centerY;
+					const size = p.size * scale;
+					const alpha = Math.max(0.01, 1 - (rotated.z + 500) / 1600) * p.brightness;
+
+					ctx.fillStyle = `rgba(0, 240, 255, ${alpha * 0.85})`;
+					ctx.beginPath();
+					ctx.arc(sx, sy, size, 0, Math.PI * 2);
+					ctx.fill();
+				}
+			});
+
+			animationFrameId = requestAnimationFrame(render);
+		};
+
+		render();
+
+		return () => {
+			window.removeEventListener("resize", handleResize);
+			window.removeEventListener("mousemove", handleMouseMove);
+			cancelAnimationFrame(animationFrameId);
+		};
 	}, []);
 
 	const handleEnter = () => {
@@ -63,7 +305,7 @@ export default function Landing({ onBack }) {
 							<a className="nav-link active-link" href="#" onClick={(e) => { e.preventDefault(); handleEnter(); }}>Pricing</a>
 							<a className="nav-link" href="#" onClick={(e) => { e.preventDefault(); handleEnter(); }}>Enterprise</a>
 							<a className="nav-link" href="#" onClick={(e) => { e.preventDefault(); handleEnter(); }}>Changelog</a>
-							<a className="nav-link" href="#" onClick={(e) => { e.preventDefault(); handleEnter(); }}>Docs</a>
+							<a className="nav-link" href="#" onClick={(e) => { e.preventDefault(); onNavigate ? onNavigate("docs") : handleEnter(); }}>Docs</a>
 						</nav>
 					</div>
 					<div className="header-right">
@@ -74,8 +316,9 @@ export default function Landing({ onBack }) {
 			</header>
 
 			<main className="omma-main">
-				{/* Hero Section */}
+				{/* Hero Section with 3D Background */}
 				<section className="omma-hero grid-bg">
+					<canvas ref={canvasRef} className="hero-3d-canvas" />
 					<div className="hero-atmosphere" />
 					<div className="glow-sphere-purple" />
 					<div className="glow-sphere-cyan" />
@@ -117,16 +360,6 @@ export default function Landing({ onBack }) {
 								Generate Scene
 							</button>
 						</div>
-					</div>
-
-					{/* Curved Hero Image Preview Container */}
-					<div className="hero-preview-container glass-panel">
-						<img
-							ref={imgRef}
-							alt="3D Cyberpunk Laboratory Scene Preview"
-							className="preview-img"
-							src="https://lh3.googleusercontent.com/aida/AP1WRLt4lfwIQ5vWbmbZkO34FcAaG9Ktjk4tyGRzLF3FXCWpWcpUxrLT4F-QDqt94zClhU62IhsAhCUvG4wHa7PS488nmRAL-X219CJimvCpXT8M83umNbwPyHZvXvGTfAacKrW3WKxVGJzMesviyJyA7UNAwtIJBgpMWbsxxpfqhjWM6gD3AS78ohC_G5_50jIrkKebgSTCSd2HiiZgzPhST2Ce5ssZWvkCnrpjImJxy6K2bwPg4gNKcdnQPp3Y"
-						/>
 					</div>
 				</section>
 

@@ -254,7 +254,7 @@
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  padding: 80px 24px 280px;
+  padding: 160px 24px 160px;
 }
 
 .omma-landing .hero-atmosphere {
@@ -272,7 +272,7 @@
   transform: translate(-50%, -50%);
   width: 800px;
   height: 800px;
-  background: rgba(188, 0, 255, 0.04);
+  background: rgba(188, 0, 255, 0.1);
   filter: blur(120px);
   border-radius: 50%;
   pointer-events: none;
@@ -285,7 +285,7 @@
   left: 33%;
   width: 600px;
   height: 600px;
-  background: rgba(0, 240, 255, 0.04);
+  background: rgba(0, 240, 255, 0.1);
   filter: blur(120px);
   border-radius: 50%;
   pointer-events: none;
@@ -468,35 +468,13 @@
 }
 
 /* HERO IMAGE PREVIEW */
-.omma-landing .hero-preview-container {
+.omma-landing .hero-3d-canvas {
   position: absolute;
-  bottom: -100px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: min(1200px, calc(100% - 48px));
-  height: 600px;
-  border-bottom: none;
-  border-top-left-radius: 100px;
-  border-top-right-radius: 100px;
-  padding: 4px;
-  overflow: hidden;
-  opacity: 0.55;
-  transition: opacity 0.5s ease, transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-  z-index: 15;
-}
-
-.omma-landing .hero-preview-container:hover {
-  opacity: 0.85;
-}
-
-.omma-landing .preview-img {
+  inset: 0;
   width: 100%;
   height: 100%;
-  object-cover: cover;
-  object-position: top center;
-  border-top-left-radius: 96px;
-  border-top-right-radius: 96px;
-  transition: transform 0.5s cubic-bezier(0.25, 0.8, 0.25, 1);
+  z-index: 5;
+  pointer-events: none;
 }
 
 /* --- BENTO GRID SECTION --- */
@@ -589,11 +567,10 @@
   right: 0;
   width: 45%;
   height: 100%;
-  opacity: 0.15;
-  pointer-events: none;
+  opacity: 0.7;
+  pointer-events: auto;
   display: none;
   flex-direction: column;
-  gap: 16px;
   padding: 24px;
   transition: opacity 0.3s ease;
 }
@@ -605,28 +582,7 @@
 }
 
 .omma-landing .bento-card:hover .websites-visual {
-  opacity: 0.35;
-}
-
-.omma-landing .visual-line-long {
-  height: 16px;
-  width: 100%;
-  background: var(--primary);
-  border-radius: 9999px;
-}
-
-.omma-landing .visual-line-short {
-  height: 16px;
-  width: 75%;
-  background: var(--primary);
-  border-radius: 9999px;
-}
-
-.omma-landing .visual-panel {
-  flex: 1;
-  border-radius: 8px;
-  border: 1px solid var(--glass-stroke);
-  background: rgba(255, 255, 255, 0.03);
+  opacity: 1;
 }
 
 /* 3D Scenes Card Spec */

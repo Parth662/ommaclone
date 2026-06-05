@@ -24,8 +24,8 @@ export default function Discover({ onOpenChat, onNavigateCommunity }) {
       ? CARDS_DATA
       : CARDS_DATA.filter((c) => c.cat === activeFilter);
 
-  const handleHeroSubmit = (text) => {
-    onOpenChat("new", text);
+  const handleHeroSubmit = (text, attachments) => {
+    onOpenChat("new", text, attachments);
   };
 
   return (

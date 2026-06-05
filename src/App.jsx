@@ -4,11 +4,14 @@ import Sidebar from "./components/Sidebar.jsx";
 import Topbar from "./components/Topbar.jsx";
 import ChatView from "./components/ChatView.jsx";
 import Landing from "./pages/Landing.jsx";
+import Docs from "./pages/Docs.jsx";
 import Discover from "./pages/Discover.jsx";
 import MyChats from "./pages/mychats.jsx";
 import Community from "./pages/Community.jsx";
 import Components from "./pages/Components.jsx";
 import Search from "./pages/Search.jsx";
+import Login from "./pages/Login.jsx";
+import Profile from "./pages/Profile.jsx";
 import { CARDS_DATA } from "./data/data.js";
 
 const PAGE_TITLES = {
@@ -19,6 +22,9 @@ const PAGE_TITLES = {
   search: "Search",
   chats: "My Chats",
   chat: "Chat",
+  docs: "Documentation",
+  login: "Login",
+  profile: "My Profile",
 };
 
 function buildInitialChatMessages(context) {
@@ -98,11 +104,12 @@ export default function App() {
   const [activePage, setActivePage] = useState("landing");
   const [chatOpen, setChatOpen] = useState(false);
   const [chatMessages, setChatMessages] = useState([]);
+  const [userEmail, setUserEmail] = useState("guest@omma.build");
 
-  const handleOpenChat = (context, initialPrompt) => {
+  const handleOpenChat = (context, initialPrompt, attachments = []) => {
     const msgs = buildInitialChatMessages(context);
     if (initialPrompt) {
-      msgs.push({ role: "user", text: initialPrompt });
+      msgs.push({ role: "user", text: initialPrompt, attachments });
     }
     setChatMessages(msgs);
     setChatOpen(true);
@@ -126,7 +133,27 @@ export default function App() {
   const currentTitle = chatOpen ? PAGE_TITLES.chat : PAGE_TITLES[activePage] || "Discover";
 
   if (activePage === "landing" && !chatOpen) {
-    return <Landing onBack={() => handleNavigate("discover")} />;
+    return <Landing onNavigate={handleNavigate} onBack={() => handleNavigate("login")} />;
+  }
+
+  if (activePage === "docs" && !chatOpen) {
+    return <Docs onBack={() => handleNavigate("discover")} />;
+  }
+
+  if (activePage === "login" && !chatOpen) {
+    return (
+      <Login
+        onLoginSuccess={(email) => {
+          setUserEmail(email);
+          handleNavigate("discover");
+        }}
+        onBack={() => handleNavigate("landing")}
+      />
+    );
+  }
+
+  if (activePage === "profile" && !chatOpen) {
+    return <Profile userEmail={userEmail} onBack={() => handleNavigate("discover")} />;
   }
 
   return (
@@ -135,6 +162,7 @@ export default function App() {
         activePage={chatOpen ? "chat" : activePage}
         onNavigate={handleNavigate}
         onOpenChat={handleOpenChat}
+        userEmail={userEmail}
       />
       <div className="main">
         {(!chatOpen && activePage === "chats") ? null : <Topbar title={currentTitle} />}
