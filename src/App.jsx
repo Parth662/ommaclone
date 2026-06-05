@@ -3,6 +3,7 @@ import "./App.css";
 import Sidebar from "./components/Sidebar.jsx";
 import Topbar from "./components/Topbar.jsx";
 import ChatView from "./components/ChatView.jsx";
+import UpgradeModal from "./components/UpgradeModal.jsx";
 import Landing from "./pages/Landing.jsx";
 import Docs from "./pages/Docs.jsx";
 import Discover from "./pages/Discover.jsx";
@@ -105,6 +106,7 @@ export default function App() {
   const [chatOpen, setChatOpen] = useState(false);
   const [chatMessages, setChatMessages] = useState([]);
   const [userEmail, setUserEmail] = useState("guest@omma.build");
+  const [showUpgrade, setShowUpgrade] = useState(false);
 
   const handleOpenChat = (context, initialPrompt, attachments = []) => {
     const msgs = buildInitialChatMessages(context);
@@ -122,7 +124,6 @@ export default function App() {
 
   const handleBack = () => {
     setChatOpen(false);
-    // If the chat was opened from chats page, go back to chats, otherwise discover
     if (activePage === "chats") {
       setActivePage("chats");
     } else {
@@ -163,9 +164,15 @@ export default function App() {
         onNavigate={handleNavigate}
         onOpenChat={handleOpenChat}
         userEmail={userEmail}
+        onUpgrade={() => setShowUpgrade(true)}
       />
       <div className="main">
-        {(!chatOpen && activePage === "chats") ? null : <Topbar title={currentTitle} />}
+        {(!chatOpen && activePage === "chats") ? null : (
+          <Topbar
+            title={currentTitle}
+            onUpgrade={() => setShowUpgrade(true)}
+          />
+        )}
 
         {chatOpen ? (
           <ChatView
@@ -195,6 +202,10 @@ export default function App() {
           </>
         )}
       </div>
+
+      {showUpgrade && (
+        <UpgradeModal onClose={() => setShowUpgrade(false)} />
+      )}
     </>
   );
 }
