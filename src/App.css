@@ -3030,6 +3030,7 @@ body {
     opacity: 0;
     transform: scale(0.95) translateY(10px);
   }
+
   to {
     opacity: 1;
     transform: scale(1) translateY(0);
@@ -3088,6 +3089,7 @@ body {
 .attachment-row::-webkit-scrollbar {
   height: 4px;
 }
+
 .attachment-row::-webkit-scrollbar-thumb {
   background: var(--bg-hover);
   border-radius: 2px;
@@ -3113,14 +3115,14 @@ body {
 .attachment-card:hover {
   border-color: var(--accent);
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .attachment-thumb {
   width: 32px;
   height: 32px;
   border-radius: 6px;
-  background: rgba(255,255,255,0.04);
+  background: rgba(255, 255, 255, 0.04);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -3128,7 +3130,7 @@ body {
   flex-shrink: 0;
   object-fit: cover;
   overflow: hidden;
-  border: 1px solid rgba(255,255,255,0.05);
+  border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .attachment-details {
@@ -3213,8 +3215,13 @@ body {
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 /* Beautiful Modal/Dialog for Adding Web Links */
@@ -3238,7 +3245,7 @@ body {
   width: 90%;
   max-width: 440px;
   padding: 24px;
-  box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
   animation: modalScaleIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   display: flex;
   flex-direction: column;
@@ -3250,6 +3257,7 @@ body {
     opacity: 0;
     transform: scale(0.95) translateY(15px);
   }
+
   to {
     opacity: 1;
     transform: scale(1) translateY(0);
@@ -3387,14 +3395,14 @@ body {
   border-radius: 8px;
   overflow: hidden;
   cursor: zoom-in;
-  border: 1px solid rgba(255,255,255,0.08);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   transition: transform 0.2s, box-shadow 0.2s;
   background: var(--bg-elevated);
 }
 
 .attachment-photo-item:hover {
   transform: scale(1.02);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 .attachment-photo-img {
@@ -3414,8 +3422,8 @@ body {
   display: flex;
   align-items: center;
   gap: 10px;
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 8px;
   padding: 8px 12px;
   color: var(--text-primary);
@@ -3429,12 +3437,12 @@ body {
 
 .msg.user .attachment-doc-item {
   background: rgba(0, 0, 0, 0.2);
-  border-color: rgba(255,255,255,0.1);
+  border-color: rgba(255, 255, 255, 0.1);
   color: #fff;
 }
 
 .attachment-doc-item:hover {
-  background: rgba(255,255,255,0.1);
+  background: rgba(255, 255, 255, 0.1);
   border-color: var(--accent);
 }
 
@@ -3461,7 +3469,7 @@ body {
 }
 
 .msg.user .attachment-doc-size {
-  color: rgba(255,255,255,0.6);
+  color: rgba(255, 255, 255, 0.6);
 }
 
 /* Lightbox Modal */
@@ -3493,7 +3501,7 @@ body {
   max-height: 80vh;
   object-fit: contain;
   border-radius: 10px;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
   animation: modalScaleIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -3501,7 +3509,7 @@ body {
   color: var(--text-primary);
   font-size: 14px;
   font-weight: 500;
-  text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
 }
 
 .lightbox-close {
