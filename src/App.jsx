@@ -13,6 +13,10 @@ import Components from "./pages/Components.jsx";
 import Search from "./pages/Search.jsx";
 import Login from "./pages/Login.jsx";
 import Profile from "./pages/Profile.jsx";
+import Settings from "./pages/Settings.jsx";
+import Trash from "./pages/Trash.jsx";
+import CreateTeam from "./pages/CreateTeam.jsx";
+import Notifications from "./pages/Notifications.jsx";
 import { CARDS_DATA } from "./data/data.js";
 
 const PAGE_TITLES = {
@@ -26,6 +30,10 @@ const PAGE_TITLES = {
   docs: "Documentation",
   login: "Login",
   profile: "My Profile",
+  settings: "Settings",
+  trash: "Trash",
+  createteam: "Create Team",
+  notifications: "Notifications",
 };
 
 function buildInitialChatMessages(context) {
@@ -108,6 +116,9 @@ export default function App() {
   const [userEmail, setUserEmail] = useState("guest@omma.build");
   const [showUpgrade, setShowUpgrade] = useState(false);
 
+  // Track subscription — set to true once user upgrades
+  const [isPro, setIsPro] = useState(false);
+
   const handleOpenChat = (context, initialPrompt, attachments = []) => {
     const msgs = buildInitialChatMessages(context);
     if (initialPrompt) {
@@ -164,14 +175,12 @@ export default function App() {
         onNavigate={handleNavigate}
         onOpenChat={handleOpenChat}
         userEmail={userEmail}
+        isPro={isPro}
         onUpgrade={() => setShowUpgrade(true)}
       />
       <div className="main">
         {(!chatOpen && activePage === "chats") ? null : (
-          <Topbar
-            title={currentTitle}
-            onUpgrade={() => setShowUpgrade(true)}
-          />
+          <Topbar title={currentTitle} onUpgrade={() => setShowUpgrade(true)} onNavigate={handleNavigate} />
         )}
 
         {chatOpen ? (
@@ -199,12 +208,30 @@ export default function App() {
             {activePage === "search" && (
               <Search onOpenChat={handleOpenChat} />
             )}
+            {activePage === "settings" && (
+              <Settings userEmail={userEmail} />
+            )}
+            {activePage === "notifications" && (
+              <Notifications />
+            )}
+            {activePage === "trash" && (
+              <Trash />
+            )}
+            {activePage === "createteam" && (
+              <CreateTeam userEmail={userEmail} isPro={isPro} onUpgrade={() => setShowUpgrade(true)} onNavigate={handleNavigate} />
+            )}
           </>
         )}
       </div>
 
       {showUpgrade && (
-        <UpgradeModal onClose={() => setShowUpgrade(false)} />
+        <UpgradeModal
+          onClose={() => setShowUpgrade(false)}
+          onUpgradeSuccess={() => {
+            setIsPro(true);
+            setShowUpgrade(false);
+          }}
+        />
       )}
     </>
   );

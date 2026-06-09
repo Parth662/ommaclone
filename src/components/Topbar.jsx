@@ -1,6 +1,6 @@
 import React from "react";
 
-export default function Topbar({ title, onUpgrade }) {
+export default function Topbar({ title, onUpgrade, onNavigate }) {
   return (
     <div className="topbar">
       <div className="topbar-left">
@@ -17,8 +17,20 @@ export default function Topbar({ title, onUpgrade }) {
           <div className="credits-dot" />
           0 credits
         </div>
-        <button className="icon-btn" title="Notifications">🔔</button>
-        <button className="icon-btn" title="Settings">⚙️</button>
+        <button
+          className="icon-btn"
+          title="Notifications"
+          onClick={() => onNavigate?.("notifications")}
+        >
+          🔔
+        </button>
+        <button
+          className="icon-btn"
+          title="Settings"
+          onClick={() => onNavigate?.("settings")}
+        >
+          ⚙️
+        </button>
       </div>
     </div>
   );
