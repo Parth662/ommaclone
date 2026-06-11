@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import "./Login.css";
 
-export default function Login({ onLoginSuccess, onBack }) {
+export default function Login({ onLoginSuccess, onBack, onNavigateSignup }) {
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -47,7 +47,6 @@ export default function Login({ onLoginSuccess, onBack }) {
     };
     window.addEventListener("resize", handleResize);
 
-    // Camera and mouse settings
     let mouseX = 0;
     let mouseY = 0;
     let targetRotX = 0.25;
@@ -61,7 +60,6 @@ export default function Login({ onLoginSuccess, onBack }) {
     };
     window.addEventListener("mousemove", handleMouseMove);
 
-    // Generative 3D Wireframe buildings representing architectural construction
     const blocks = [
       { x: 0, z: 0, w: 140, h: 360, d: 140 },
       { x: -280, z: -150, w: 180, h: 220, d: 180 },
@@ -72,7 +70,6 @@ export default function Login({ onLoginSuccess, onBack }) {
       { x: 450, z: -100, w: 100, h: 160, d: 100 }
     ];
 
-    // Floating data nodes (particles)
     const particles = [];
     const particleCount = 60;
     const groundY = 150;
@@ -93,7 +90,6 @@ export default function Login({ onLoginSuccess, onBack }) {
     const gridSize = 14;
     const gridSpacing = 80;
 
-    // 3D Rotation helper
     const rotate3D = (x, y, z, angleX, angleY) => {
       const cosY = Math.cos(angleY);
       const sinY = Math.sin(angleY);
@@ -113,7 +109,6 @@ export default function Login({ onLoginSuccess, onBack }) {
       ctx.fillStyle = "#000000";
       ctx.fillRect(0, 0, width, height);
 
-      // Smooth rot interpolation
       targetRotY = mouseX * 0.7;
       targetRotX = 0.25 + mouseY * 0.35;
       rotX += (targetRotX - rotX) * 0.05;
@@ -122,11 +117,9 @@ export default function Login({ onLoginSuccess, onBack }) {
       const centerX = width / 2;
       const centerY = height / 2 + 80;
 
-      // --- Ground Grid ---
       ctx.strokeStyle = "rgba(0, 240, 255, 0.14)";
       ctx.lineWidth = 1;
 
-      // Z lines
       for (let x = -gridSize / 2; x <= gridSize / 2; x++) {
         ctx.beginPath();
         let first = true;
@@ -149,7 +142,6 @@ export default function Login({ onLoginSuccess, onBack }) {
         ctx.stroke();
       }
 
-      // X lines
       for (let z = -gridSize / 2; z <= gridSize / 2; z++) {
         ctx.beginPath();
         let first = true;
@@ -172,7 +164,6 @@ export default function Login({ onLoginSuccess, onBack }) {
         ctx.stroke();
       }
 
-      // --- Architectural Wireframes ---
       blocks.forEach((block) => {
         const x0 = block.x - block.w / 2;
         const x1 = block.x + block.w / 2;
@@ -204,9 +195,9 @@ export default function Login({ onLoginSuccess, onBack }) {
         });
 
         const edges = [
-          [0, 1], [1, 2], [2, 3], [3, 0], // Front face
-          [4, 5], [5, 6], [6, 7], [7, 4], // Back face
-          [0, 4], [1, 5], [2, 6], [3, 7]  // Pillars
+          [0, 1], [1, 2], [2, 3], [3, 0],
+          [4, 5], [5, 6], [6, 7], [7, 4],
+          [0, 4], [1, 5], [2, 6], [3, 7]
         ];
 
         ctx.lineWidth = 1;
@@ -224,7 +215,6 @@ export default function Login({ onLoginSuccess, onBack }) {
           }
         });
 
-        // Top cap face glow
         const topFace = [3, 2, 6, 7];
         if (topFace.every((idx) => projected[idx].visible)) {
           const avgZ = topFace.reduce((sum, idx) => sum + projected[idx].z, 0) / 4;
@@ -250,7 +240,6 @@ export default function Login({ onLoginSuccess, onBack }) {
         }
       });
 
-      // --- Draw Particles ---
       particles.forEach((p) => {
         p.y -= p.speed;
         if (p.y < groundY - 500) {
@@ -286,7 +275,6 @@ export default function Login({ onLoginSuccess, onBack }) {
     };
   }, []);
 
-  // Simulating secure loading transition
   useEffect(() => {
     if (!isLoading) return;
     setLoadingStep(0);
@@ -308,7 +296,6 @@ export default function Login({ onLoginSuccess, onBack }) {
     return () => clearInterval(stepInterval);
   }, [isLoading, onLoginSuccess, email, isGoogle]);
 
-  // OTP resend countdown
   useEffect(() => {
     if (authStep !== "otp") return;
     if (countdown <= 0) {
@@ -321,7 +308,6 @@ export default function Login({ onLoginSuccess, onBack }) {
     return () => clearTimeout(timer);
   }, [countdown, authStep]);
 
-  // Submit email and trigger code transition
   const handleSubmitEmail = (e) => {
     e.preventDefault();
     setError("");
@@ -337,19 +323,16 @@ export default function Login({ onLoginSuccess, onBack }) {
       return;
     }
 
-    // Go to OTP step
     setOtp(["", "", "", "", "", ""]);
     setCountdown(30);
     setCanResend(false);
     setAuthStep("otp");
     
-    // Autofocus first OTP box
     setTimeout(() => {
       otpRef0.current?.focus();
     }, 100);
   };
 
-  // Submit 6-digit OTP code
   const handleSubmitOtp = (e) => {
     e.preventDefault();
     setError("");
@@ -366,11 +349,9 @@ export default function Login({ onLoginSuccess, onBack }) {
     setCountdown(30);
     setCanResend(false);
     setError("");
-    // Autofocus first box
     otpRef0.current?.focus();
   };
 
-  // Auto-focus next input field on write
   const handleOtpChange = (value, index) => {
     if (value && isNaN(value)) return;
 
@@ -383,7 +364,6 @@ export default function Login({ onLoginSuccess, onBack }) {
     }
   };
 
-  // Auto-focus previous input field on Backspace key
   const handleOtpKeyDown = (e, index) => {
     if (e.key === "Backspace") {
       if (!otp[index] && index > 0) {
@@ -399,7 +379,6 @@ export default function Login({ onLoginSuccess, onBack }) {
     }
   };
 
-  // Clipboard paste auto-fill support
   const handleOtpPaste = (e) => {
     e.preventDefault();
     const pasteData = e.clipboardData.getData("text").trim();
@@ -415,7 +394,6 @@ export default function Login({ onLoginSuccess, onBack }) {
     setIsLoading(true);
   };
 
-  // Click handler for top-left back button
   const handleBackAction = () => {
     if (authStep === "otp") {
       setAuthStep("email");
@@ -427,15 +405,12 @@ export default function Login({ onLoginSuccess, onBack }) {
 
   return (
     <div className="omma-login">
-      {/* 3D shapes backdrop */}
       <canvas ref={canvasRef} className="login-bg-canvas" />
 
-      {/* Decorative ambient glowing backlights */}
       <div className="login-glow-purple" />
       <div className="login-glow-cyan" />
 
       <div className="login-card-container">
-        {/* Dynamic Back Button */}
         {onBack && !isLoading && (
           <button type="button" className="btn-back-home" onClick={handleBackAction}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -446,13 +421,11 @@ export default function Login({ onLoginSuccess, onBack }) {
           </button>
         )}
 
-        {/* Localized glassmorphism background glows */}
         <div className="login-card-glow-purple" />
         <div className="login-card-glow-cyan" />
 
         <div className="login-card glass-panel">
           {isLoading ? (
-            /* Secure loading interface */
             <div className="login-loading-view">
               <div className="auth-spinner">
                 <div className="spinner-outer" />
@@ -470,10 +443,8 @@ export default function Login({ onLoginSuccess, onBack }) {
               </div>
             </div>
           ) : (
-            /* Step-based auth fields */
             <>
               {authStep === "email" ? (
-                /* EMAIL ID INPUT STEP */
                 <>
                   <div className="login-brand">
                     <span className="brand-logo-icon">
@@ -528,9 +499,22 @@ export default function Login({ onLoginSuccess, onBack }) {
                     </svg>
                     Login by Google
                   </button>
+
+                  {/* ── Sign up redirect — mirrors Signup page's "Already have an account?" line ── */}
+                  <p className="login-redirect">
+                    Don't have an account?{" "}
+                    <span
+                      className="login-redirect-link"
+                      onClick={() => onNavigateSignup && onNavigateSignup()}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => e.key === "Enter" && onNavigateSignup && onNavigateSignup()}
+                    >
+                      Sign up
+                    </span>
+                  </p>
                 </>
               ) : (
-                /* OTP CODE INPUT STEP */
                 <>
                   <div className="login-brand">
                     <span className="brand-logo-icon">

@@ -12,6 +12,7 @@ import Community from "./pages/Community.jsx";
 import Components from "./pages/Components.jsx";
 import Search from "./pages/Search.jsx";
 import Login from "./pages/Login.jsx";
+import Signup from "./pages/Signup.jsx";
 import Profile from "./pages/Profile.jsx";
 import Settings from "./pages/Settings.jsx";
 import Trash from "./pages/Trash.jsx";
@@ -29,6 +30,7 @@ const PAGE_TITLES = {
   chat: "Chat",
   docs: "Documentation",
   login: "Login",
+  signup: "Sign Up",
   profile: "My Profile",
   settings: "Settings",
   trash: "Trash",
@@ -115,8 +117,6 @@ export default function App() {
   const [chatMessages, setChatMessages] = useState([]);
   const [userEmail, setUserEmail] = useState("guest@omma.build");
   const [showUpgrade, setShowUpgrade] = useState(false);
-
-  // Track subscription — set to true once user upgrades
   const [isPro, setIsPro] = useState(false);
 
   const handleOpenChat = (context, initialPrompt, attachments = []) => {
@@ -144,8 +144,16 @@ export default function App() {
 
   const currentTitle = chatOpen ? PAGE_TITLES.chat : PAGE_TITLES[activePage] || "Discover";
 
+  // ── Full-screen pages ────────────────────────────────────────────────────
+
   if (activePage === "landing" && !chatOpen) {
-    return <Landing onNavigate={handleNavigate} onBack={() => handleNavigate("login")} />;
+    return (
+      <Landing
+        onNavigate={handleNavigate}
+        onBack={() => handleNavigate("login")}
+        onGetStarted={() => handleNavigate("signup")}
+      />
+    );
   }
 
   if (activePage === "docs" && !chatOpen) {
@@ -160,6 +168,20 @@ export default function App() {
           handleNavigate("discover");
         }}
         onBack={() => handleNavigate("landing")}
+        onNavigateSignup={() => handleNavigate("signup")}
+      />
+    );
+  }
+
+  if (activePage === "signup" && !chatOpen) {
+    return (
+      <Signup
+        onSignupSuccess={(email) => {
+          setUserEmail(email || "guest@omma.build");
+          handleNavigate("discover");
+        }}
+        onBack={() => handleNavigate("landing")}
+        onNavigateLogin={() => handleNavigate("login")}
       />
     );
   }
@@ -167,6 +189,8 @@ export default function App() {
   if (activePage === "profile" && !chatOpen) {
     return <Profile userEmail={userEmail} onBack={() => handleNavigate("discover")} />;
   }
+
+  // ── Dashboard shell ──────────────────────────────────────────────────────
 
   return (
     <>
@@ -184,10 +208,7 @@ export default function App() {
         )}
 
         {chatOpen ? (
-          <ChatView
-            initialMessages={chatMessages}
-            onBack={handleBack}
-          />
+          <ChatView initialMessages={chatMessages} onBack={handleBack} />
         ) : (
           <>
             {activePage === "discover" && (
@@ -196,29 +217,20 @@ export default function App() {
                 onNavigateCommunity={() => handleNavigate("community")}
               />
             )}
-            {activePage === "chats" && (
-              <MyChats onOpenChat={handleOpenChat} />
-            )}
-            {activePage === "community" && (
-              <Community onOpenChat={handleOpenChat} />
-            )}
-            {activePage === "components" && (
-              <Components onOpenChat={handleOpenChat} />
-            )}
-            {activePage === "search" && (
-              <Search onOpenChat={handleOpenChat} />
-            )}
-            {activePage === "settings" && (
-              <Settings userEmail={userEmail} />
-            )}
-            {activePage === "notifications" && (
-              <Notifications />
-            )}
-            {activePage === "trash" && (
-              <Trash />
-            )}
+            {activePage === "chats" && <MyChats onOpenChat={handleOpenChat} />}
+            {activePage === "community" && <Community onOpenChat={handleOpenChat} />}
+            {activePage === "components" && <Components onOpenChat={handleOpenChat} />}
+            {activePage === "search" && <Search onOpenChat={handleOpenChat} />}
+            {activePage === "settings" && <Settings userEmail={userEmail} />}
+            {activePage === "notifications" && <Notifications />}
+            {activePage === "trash" && <Trash />}
             {activePage === "createteam" && (
-              <CreateTeam userEmail={userEmail} isPro={isPro} onUpgrade={() => setShowUpgrade(true)} onNavigate={handleNavigate} />
+              <CreateTeam
+                userEmail={userEmail}
+                isPro={isPro}
+                onUpgrade={() => setShowUpgrade(true)}
+                onNavigate={handleNavigate}
+              />
             )}
           </>
         )}
