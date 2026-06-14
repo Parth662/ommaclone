@@ -346,9 +346,41 @@ export default function Landing({ onBack, onNavigate, onGetStarted }) {
                 </p>
               </div>
               <div className="websites-visual">
-                <div className="visual-line-long" />
-                <div className="visual-line-short" />
-                <div className="visual-panel" />
+                <div className="mock-browser glass-panel">
+                  <div className="browser-header">
+                    <div className="browser-dots">
+                      <span className="dot dot-red"></span>
+                      <span className="dot dot-yellow"></span>
+                      <span className="dot dot-green"></span>
+                    </div>
+                    <div className="browser-address">omma.build/studio</div>
+                  </div>
+                  <div className="browser-content">
+                    <div className="mock-nav">
+                      <div className="mock-logo">▲ OMMA</div>
+                      <div className="mock-nav-links">
+                        <span className="nav-dot"></span>
+                        <span className="nav-dot"></span>
+                        <span className="nav-dot"></span>
+                      </div>
+                    </div>
+                    <div className="mock-hero">
+                      <div className="mock-title">Interactive 3D Art</div>
+                      <div className="mock-subtitle">Generated in seconds by Forge AI.</div>
+                      <div className="mock-cta">Get Started</div>
+                    </div>
+                    <div className="mock-grid">
+                      <div className="mock-grid-card">
+                        <div className="mock-card-icon">⚡</div>
+                        <div className="mock-card-title">Assets</div>
+                      </div>
+                      <div className="mock-grid-card">
+                        <div className="mock-card-icon">🌀</div>
+                        <div className="mock-card-title">Shaders</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -364,8 +396,8 @@ export default function Landing({ onBack, onNavigate, onGetStarted }) {
               </div>
               <div className="scenes-visual">
                 <img
-                  alt="3D Spatial Representation Preview"
-                  src="https://lh3.googleusercontent.com/aida/AP1WRLt4lfwIQ5vWbmbZkO34FcAaG9Ktjk4tyGRzLF3FXCWpWcpUxrLT4F-QDqt94zClhU62IhsAhCUvG4wHa7PS488nmRAL-X219CJimvCpXT8M83umNbwPyHZvXvGTfAacKrW3WKxVGJzMesviyJyA7UNAwtIJBgpMWbsxxpfqhjWM6gD3AS78ohC_G5_50jIrkKebgSTCSd2HiiZgzPhST2Ce5ssZWvkCnrpjImJxy6K2bwPg4gNKcdnQPp3Y"
+                  alt="3D Cyberpunk Holographic Character Preview"
+                  src="/cyberpunk_3d_character.png"
                 />
               </div>
             </div>
@@ -373,12 +405,18 @@ export default function Landing({ onBack, onNavigate, onGetStarted }) {
             <div className="bento-card col-span-4 glass-panel apps-card">
               <div className="card-top">
                 <div className="card-icon-wrapper glass-panel cyan-icon">
-                  <span className="material-symbols-outlined">apps</span>
+                  <span className="material-symbols-outlined">smart_toy</span>
                 </div>
                 <h3 className="text-headline-sm card-title">Apps</h3>
                 <p className="text-body-sm card-description">
                   Full-stack logic and database schemas orchestrated by Omma's core agents.
                 </p>
+              </div>
+              <div className="apps-visual">
+                <img
+                  alt="Robotic Application Relation Preview"
+                  src="/robotic_app_relation.png"
+                />
               </div>
             </div>
 

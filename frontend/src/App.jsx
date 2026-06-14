@@ -158,6 +158,20 @@ export default function App() {
 
   const currentTitle = chatOpen ? PAGE_TITLES.chat : PAGE_TITLES[activePage] || "Discover";
 
+  const isLoggedIn = !!localStorage.getItem("token");
+  const publicPages = ["landing", "login", "signup", "docs"];
+
+  // Auth Guard: Redirect to landing page if user is not authenticated and attempts to access private pages
+  if (!isLoggedIn && !publicPages.includes(activePage)) {
+    return (
+      <Landing
+        onNavigate={handleNavigate}
+        onBack={() => handleNavigate("login")}
+        onGetStarted={() => handleNavigate("signup")}
+      />
+    );
+  }
+
   // ── Full-screen pages ────────────────────────────────────────────────────
 
   if (activePage === "landing" && !chatOpen) {
@@ -171,7 +185,7 @@ export default function App() {
   }
 
   if (activePage === "docs" && !chatOpen) {
-    return <Docs onBack={() => handleNavigate("discover")} />;
+    return <Docs onBack={() => handleNavigate(isLoggedIn ? "discover" : "landing")} />;
   }
 
   if (activePage === "login" && !chatOpen) {
