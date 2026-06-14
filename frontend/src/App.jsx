@@ -119,6 +119,15 @@ export default function App() {
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [isPro, setIsPro] = useState(false);
 
+  React.useEffect(() => {
+    const token = localStorage.getItem("token");
+    const email = localStorage.getItem("userEmail");
+    if (token && email) {
+      setUserEmail(email);
+      setActivePage("discover");
+    }
+  }, []);
+
   const handleOpenChat = (context, initialPrompt, attachments = []) => {
     const msgs = buildInitialChatMessages(context);
     if (initialPrompt) {
@@ -130,6 +139,11 @@ export default function App() {
 
   const handleNavigate = (page) => {
     setChatOpen(false);
+    if (page === "login" || page === "landing") {
+      localStorage.removeItem("token");
+      localStorage.removeItem("userEmail");
+      setUserEmail("guest@omma.build");
+    }
     setActivePage(page);
   };
 

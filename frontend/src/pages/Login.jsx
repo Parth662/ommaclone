@@ -1,14 +1,21 @@
 import React, { useState, useEffect, useRef } from "react";
 import "./Login.css";
+import { auth } from "../firebase";
+import { signInWithPopup, GoogleAuthProvider } from "firebase/auth";
+import axios from "axios";
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5001";
 
 export default function Login({ onLoginSuccess, onBack, onNavigateSignup }) {
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isSendingOtp, setIsSendingOtp] = useState(false);
   const [loadingStep, setLoadingStep] = useState(0);
   const [authStep, setAuthStep] = useState("email"); // "email" or "otp"
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
-  const [countdown, setCountdown] = useState(30);
+  const [countdown, setCountdown] = useState(60);
   const [canResend, setCanResend] = useState(false);
   const [isGoogle, setIsGoogle] = useState(false);
   
@@ -308,9 +315,10 @@ export default function Login({ onLoginSuccess, onBack, onNavigateSignup }) {
     return () => clearTimeout(timer);
   }, [countdown, authStep]);
 
-  const handleSubmitEmail = (e) => {
+  const handleSubmitEmail = async (e) => {
     e.preventDefault();
     setError("");
+    setSuccessMessage("");
 
     if (!email.trim()) {
       setError("Email address is required.");
@@ -323,17 +331,32 @@ export default function Login({ onLoginSuccess, onBack, onNavigateSignup }) {
       return;
     }
 
-    setOtp(["", "", "", "", "", ""]);
-    setCountdown(30);
-    setCanResend(false);
-    setAuthStep("otp");
-    
-    setTimeout(() => {
-      otpRef0.current?.focus();
-    }, 100);
+    setIsSendingOtp(true);
+    try {
+      const response = await axios.post(`${API_BASE_URL}/send-otp`, { email: email.trim() });
+      const data = response.data;
+      if (!data.success) {
+        throw new Error(data.message || "Failed to send OTP.");
+      }
+
+      setOtp(["", "", "", "", "", ""]);
+      setCountdown(60);
+      setCanResend(false);
+      setSuccessMessage("Verification code sent successfully!");
+      setAuthStep("otp");
+      
+      setTimeout(() => {
+        otpRef0.current?.focus();
+      }, 100);
+    } catch (err) {
+      const errMsg = err.response?.data?.message || err.message || "Failed to send verification code. Try again.";
+      setError(errMsg);
+    } finally {
+      setIsSendingOtp(false);
+    }
   };
 
-  const handleSubmitOtp = (e) => {
+  const handleSubmitOtp = async (e) => {
     e.preventDefault();
     setError("");
 
@@ -342,14 +365,51 @@ export default function Login({ onLoginSuccess, onBack, onNavigateSignup }) {
       return;
     }
 
-    setIsLoading(true);
+    const otpCode = otp.join("");
+    setIsSendingOtp(true);
+    try {
+      const response = await axios.post(`${API_BASE_URL}/verify-otp`, { email: email.trim(), otp: otpCode });
+      const data = response.data;
+      if (!data.success) {
+        throw new Error(data.message || "Verification failed.");
+      }
+
+      // Store credentials in localStorage
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("userEmail", data.email);
+
+      // Start standard animated workspace setup loading sequence
+      setIsLoading(true);
+    } catch (err) {
+      const errMsg = err.response?.data?.message || err.message || "Invalid or expired verification code.";
+      setError(errMsg);
+    } finally {
+      setIsSendingOtp(false);
+    }
   };
 
-  const handleResendCode = () => {
-    setCountdown(30);
-    setCanResend(false);
+  const handleResendCode = async () => {
     setError("");
-    otpRef0.current?.focus();
+    setSuccessMessage("");
+    setIsSendingOtp(true);
+    try {
+      const response = await axios.post(`${API_BASE_URL}/send-otp`, { email: email.trim() });
+      const data = response.data;
+      if (!data.success) {
+        throw new Error(data.message || "Failed to resend OTP.");
+      }
+
+      setOtp(["", "", "", "", "", ""]);
+      setCountdown(60);
+      setCanResend(false);
+      setSuccessMessage("A new verification code has been sent.");
+      otpRef0.current?.focus();
+    } catch (err) {
+      const errMsg = err.response?.data?.message || err.message || "Failed to resend. Please try again.";
+      setError(errMsg);
+    } finally {
+      setIsSendingOtp(false);
+    }
   };
 
   const handleOtpChange = (value, index) => {
@@ -389,9 +449,36 @@ export default function Login({ onLoginSuccess, onBack, onNavigateSignup }) {
     }
   };
 
-  const handleGoogleLogin = () => {
-    setIsGoogle(true);
-    setIsLoading(true);
+  const handleGoogleLogin = async () => {
+    setError("");
+    setIsSendingOtp(true);
+    try {
+      const provider = new GoogleAuthProvider();
+      const result = await signInWithPopup(auth, provider);
+      
+      // Retrieve the Firebase ID Token
+      const idToken = await result.user.getIdToken();
+
+      // Exchange the Firebase ID token for our backend application JWT session
+      const response = await axios.post(`${API_BASE_URL}/google-login`, { idToken });
+      const data = response.data;
+      if (!data.success) {
+        throw new Error(data.message || "Failed to authenticate with backend.");
+      }
+
+      setIsGoogle(true);
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("userEmail", data.email);
+
+      // Trigger standard workspace setup animated loader
+      setIsLoading(true);
+    } catch (err) {
+      console.error("Google Auth Error:", err);
+      const errMsg = err.response?.data?.message || err.message || "Google Authentication failed. Please try again.";
+      setError(errMsg);
+    } finally {
+      setIsSendingOtp(false);
+    }
   };
 
   const handleBackAction = () => {
@@ -475,8 +562,8 @@ export default function Login({ onLoginSuccess, onBack, onNavigateSignup }) {
                       {error && <p className="input-error-msg">{error}</p>}
                     </div>
 
-                    <button type="submit" className="btn-login-submit text-headline-sm">
-                      Continue with Email
+                    <button type="submit" className="btn-login-submit text-headline-sm" disabled={isSendingOtp}>
+                      {isSendingOtp ? "Sending OTP..." : "Send OTP"}
                     </button>
                   </form>
 
@@ -549,10 +636,11 @@ export default function Login({ onLoginSuccess, onBack, onNavigateSignup }) {
                       ))}
                     </div>
 
+                    {successMessage && <p className="success-msg text-center">{successMessage}</p>}
                     {error && <p className="input-error-msg text-center">{error}</p>}
 
-                    <button type="submit" className="btn-login-submit text-headline-sm">
-                      Verify & Continue
+                    <button type="submit" className="btn-login-submit text-headline-sm" disabled={isSendingOtp}>
+                      {isSendingOtp ? "Verifying..." : "Verify OTP"}
                     </button>
                   </form>
 

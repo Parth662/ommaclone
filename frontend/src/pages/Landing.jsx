@@ -6,6 +6,17 @@ export default function Landing({ onBack, onNavigate, onGetStarted }) {
   const [promptValue, setPromptValue] = useState("");
   const canvasRef = useRef(null);
 
+  const [showPricing, setShowPricing] = useState(false);
+  const [pricingTab, setPricingTab] = useState("subs"); // "subs" or "credits"
+  const [showEnterprise, setShowEnterprise] = useState(false);
+  const [enterpriseSubmitted, setEnterpriseSubmitted] = useState(false);
+  const [showChangelog, setShowChangelog] = useState(false);
+
+  const handleEnterpriseSubmit = (e) => {
+    e.preventDefault();
+    setEnterpriseSubmitted(true);
+  };
+
   const handleLogin = () => {
     if (onBack) onBack();
   };
@@ -254,9 +265,9 @@ export default function Landing({ onBack, onNavigate, onGetStarted }) {
               OMMA
             </span>
             <nav className="nav-menu" aria-label="Main Navigation">
-              <a className="nav-link active-link" href="#" onClick={(e) => { e.preventDefault(); handleGetStarted(); }}>Pricing</a>
-              <a className="nav-link" href="#" onClick={(e) => { e.preventDefault(); handleGetStarted(); }}>Enterprise</a>
-              <a className="nav-link" href="#" onClick={(e) => { e.preventDefault(); handleGetStarted(); }}>Changelog</a>
+              <a className="nav-link" href="#" onClick={(e) => { e.preventDefault(); setShowPricing(true); }}>Pricing</a>
+              <a className="nav-link" href="#" onClick={(e) => { e.preventDefault(); setShowEnterprise(true); setEnterpriseSubmitted(false); }}>Enterprise</a>
+              <a className="nav-link" href="#" onClick={(e) => { e.preventDefault(); setShowChangelog(true); }}>Changelog</a>
               <a className="nav-link" href="#" onClick={(e) => { e.preventDefault(); onNavigate ? onNavigate("docs") : handleGetStarted(); }}>Docs</a>
             </nav>
           </div>
@@ -545,6 +556,254 @@ export default function Landing({ onBack, onNavigate, onGetStarted }) {
           </nav>
         </div>
       </footer>
+
+      {showPricing && (
+        <div className="landing-modal-overlay" onClick={() => setShowPricing(false)}>
+          <div className="landing-modal-box glass-panel neon-glow-cyan" onClick={(e) => e.stopPropagation()}>
+            <div className="landing-modal-header">
+              <div>
+                <h3 className="landing-modal-title gradient-text-cyan">Pricing Plans</h3>
+                <p className="landing-modal-subtitle">Choose the perfect tier for your creation process</p>
+              </div>
+              <button className="landing-modal-close" onClick={() => setShowPricing(false)}>✕</button>
+            </div>
+            
+            <div className="pricing-tabs">
+              <button 
+                className={`pricing-tab ${pricingTab === "subs" ? "active" : ""}`}
+                onClick={() => setPricingTab("subs")}
+              >
+                Subscription Plans
+              </button>
+              <button 
+                className={`pricing-tab ${pricingTab === "credits" ? "active" : ""}`}
+                onClick={() => setPricingTab("credits")}
+              >
+                Credit Packs
+              </button>
+            </div>
+
+            {pricingTab === "subs" ? (
+              <div className="landing-pricing-grid">
+                <div className="landing-price-card">
+                  <div className="price-card-header">
+                    <span className="plan-name">Free</span>
+                    <div className="plan-price">$0<span className="period">/mo</span></div>
+                    <p className="plan-desc">Get started with the basics of spatial engine design</p>
+                  </div>
+                  <ul className="plan-features">
+                    <li>✓ 50 credits / month</li>
+                    <li>✓ Basic 3D models</li>
+                    <li>✓ Code generation</li>
+                    <li>✓ Community access</li>
+                  </ul>
+                  <button className="btn-plan btn-secondary" onClick={() => { setShowPricing(false); handleGetStarted(); }}>Get Started</button>
+                </div>
+                
+                <div className="landing-price-card highlighted">
+                  <div className="price-badge">POPULAR</div>
+                  <div className="price-card-header">
+                    <span className="plan-name">Pro</span>
+                    <div className="plan-price">$39<span className="period">/mo</span></div>
+                    <p className="plan-desc">For professional creators and spatial developers</p>
+                  </div>
+                  <ul className="plan-features">
+                    <li>✓ 2,000 credits / month</li>
+                    <li>✓ Everything in Free</li>
+                    <li>✓ Premium 3D model generation</li>
+                    <li>✓ Image generation</li>
+                    <li>✓ Custom domains</li>
+                  </ul>
+                  <button className="btn-plan btn-primary" onClick={() => { setShowPricing(false); handleGetStarted(); }}>Upgrade to Pro</button>
+                </div>
+
+                <div className="landing-price-card">
+                  <div className="price-card-header">
+                    <span className="plan-name">Max</span>
+                    <div className="plan-price">$129<span className="period">/seat/mo</span></div>
+                    <p className="plan-desc">For professional teams scaling spatial intelligence</p>
+                  </div>
+                  <ul className="plan-features">
+                    <li>✓ 7,000 credits / seat / month</li>
+                    <li>✓ Everything in Pro</li>
+                    <li>✓ Team collaboration spaces</li>
+                    <li>✓ Shared credit pools</li>
+                  </ul>
+                  <button className="btn-plan btn-secondary" onClick={() => { setShowPricing(false); handleGetStarted(); }}>Upgrade to Max</button>
+                </div>
+              </div>
+            ) : (
+              <div className="landing-credits-grid">
+                <div className="landing-credit-card">
+                  <div className="credit-header">
+                    <span className="credit-amount">500 credits</span>
+                    <div className="credit-price">$5</div>
+                  </div>
+                  <p className="credit-desc">Perfect for occasional experiments and small projects.</p>
+                  <button className="btn-plan btn-secondary" onClick={() => { setShowPricing(false); handleGetStarted(); }}>Buy Pack</button>
+                </div>
+                <div className="landing-credit-card highlighted">
+                  <div className="price-badge">POPULAR</div>
+                  <div className="credit-header">
+                    <span className="credit-amount">2,000 credits</span>
+                    <div className="credit-price">$15</div>
+                  </div>
+                  <p className="credit-desc">Best value for expanding design ideas and rapid iterations.</p>
+                  <button className="btn-plan btn-primary" onClick={() => { setShowPricing(false); handleGetStarted(); }}>Buy Pack</button>
+                </div>
+                <div className="landing-credit-card">
+                  <div className="credit-header">
+                    <span className="credit-amount">5,000 credits</span>
+                    <div className="credit-price">$35</div>
+                  </div>
+                  <p className="credit-desc">High capacity for continuous generation and export.</p>
+                  <button className="btn-plan btn-secondary" onClick={() => { setShowPricing(false); handleGetStarted(); }}>Buy Pack</button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {showEnterprise && (
+        <div className="landing-modal-overlay" onClick={() => setShowEnterprise(false)}>
+          <div className="landing-modal-box glass-panel neon-glow-purple" onClick={(e) => e.stopPropagation()}>
+            <div className="landing-modal-header">
+              <div>
+                <h3 className="landing-modal-title gradient-text-purple">Omma Enterprise</h3>
+                <p className="landing-modal-subtitle">Scale your AI and spatial pipeline with full control</p>
+              </div>
+              <button className="landing-modal-close" onClick={() => setShowEnterprise(false)}>✕</button>
+            </div>
+            
+            <div className="enterprise-content-layout">
+              <div className="enterprise-details">
+                <div className="ent-feature">
+                  <span className="material-symbols-outlined ent-feature-icon">speed</span>
+                  <div>
+                    <h4 className="ent-feature-title">Dedicated Compute</h4>
+                    <p className="ent-feature-text">High-priority H100 GPU clusters ensuring sub-second execution times for all volumetric simulations.</p>
+                  </div>
+                </div>
+                <div className="ent-feature">
+                  <span className="material-symbols-outlined ent-feature-icon">security</span>
+                  <div>
+                    <h4 className="ent-feature-title">Enterprise Security & SSO</h4>
+                    <p className="ent-feature-text">SAML/OIDC SSO, private VPC deployments, SOC2 compliance, and dedicated isolated data systems.</p>
+                  </div>
+                </div>
+                <div className="ent-feature">
+                  <span className="material-symbols-outlined ent-feature-icon">schema</span>
+                  <div>
+                    <h4 className="ent-feature-title">Custom Trained Agents</h4>
+                    <p className="ent-feature-text">Fine-tune models on your proprietary CAD blueprints, internal design guidelines, and assets.</p>
+                  </div>
+                </div>
+                <div className="ent-feature">
+                  <span className="material-symbols-outlined ent-feature-icon">support_agent</span>
+                  <div>
+                    <h4 className="ent-feature-title">Dedicated SLA Support</h4>
+                    <p className="ent-feature-text">24/7 dedicated support desk with expert solutions engineers, training workshops, and custom integration assistance.</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="enterprise-form-container glass-panel">
+                {enterpriseSubmitted ? (
+                  <div className="enterprise-success-state">
+                    <span className="material-symbols-outlined success-icon">check_circle</span>
+                    <h4 className="success-title">Request Received!</h4>
+                    <p className="success-text">Thank you for reaching out. Our enterprise team will contact you within 24 hours to schedule a custom demonstration.</p>
+                    <button className="btn-plan btn-primary" style={{ marginTop: 16 }} onClick={() => setShowEnterprise(false)}>Close</button>
+                  </div>
+                ) : (
+                  <form onSubmit={handleEnterpriseSubmit} className="enterprise-form">
+                    <h4 className="form-heading">Contact Enterprise Sales</h4>
+                    <div className="form-group">
+                      <label htmlFor="ent-name">Full Name</label>
+                      <input type="text" id="ent-name" required placeholder="John Doe" />
+                    </div>
+                    <div className="form-group">
+                      <label htmlFor="ent-email">Work Email</label>
+                      <input type="email" id="ent-email" required placeholder="john@company.com" />
+                    </div>
+                    <div className="form-group">
+                      <label htmlFor="ent-company">Company Name</label>
+                      <input type="text" id="ent-company" required placeholder="Acme Corp" />
+                    </div>
+                    <div className="form-group">
+                      <label htmlFor="ent-message">Tell us about your project</label>
+                      <textarea id="ent-message" required placeholder="We want to integrate Omma into our spatial visualization workflow..." rows="3" />
+                    </div>
+                    <button type="submit" className="btn-plan btn-primary">Submit Request</button>
+                  </form>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showChangelog && (
+        <div className="landing-modal-overlay" onClick={() => setShowChangelog(false)}>
+          <div className="landing-modal-box glass-panel neon-glow-white" onClick={(e) => e.stopPropagation()}>
+            <div className="landing-modal-header">
+              <div>
+                <h3 className="landing-modal-title">What's New</h3>
+                <p className="landing-modal-subtitle">Follow the evolution of the Omma spatial web builder</p>
+              </div>
+              <button className="landing-modal-close" onClick={() => setShowChangelog(false)}>✕</button>
+            </div>
+            
+            <div className="changelog-timeline">
+              <div className="changelog-item">
+                <div className="changelog-meta">
+                  <span className="version-badge v-alpha">v2.0.0-alpha</span>
+                  <span className="changelog-date">June 2026</span>
+                </div>
+                <div className="changelog-details">
+                  <h4 className="changelog-title">Parallel Intelligence & Interactive Grids</h4>
+                  <ul className="changelog-bullets">
+                    <li>Added a high-performance interactive 3D grid and wireframe animation system to the hero page.</li>
+                    <li>Introduced parallel agent dashboards with structural logic, physics solving, and PBR materialists.</li>
+                    <li>Enabled raw CSV & JSON data mappings directly into volumetric 3D coordinates.</li>
+                  </ul>
+                </div>
+              </div>
+              
+              <div className="changelog-item">
+                <div className="changelog-meta">
+                  <span className="version-badge v-beta">v1.9.0-beta</span>
+                  <span className="changelog-date">May 2026</span>
+                </div>
+                <div className="changelog-details">
+                  <h4 className="changelog-title">High Fidelity Rendering & Export</h4>
+                  <ul className="changelog-bullets">
+                    <li>Added full OBJ and GLTF export options for three.js and Unreal Engine 5.</li>
+                    <li>Optimized PBR textures and light-reactive reflections.</li>
+                    <li>Integrated real-time websocket connections to pipeline inspector.</li>
+                  </ul>
+                </div>
+              </div>
+
+              <div className="changelog-item">
+                <div className="changelog-meta">
+                  <span className="version-badge v-stable">v1.8.0</span>
+                  <span className="changelog-date">April 2026</span>
+                </div>
+                <div className="changelog-details">
+                  <h4 className="changelog-title">Vite Web App Generator Initial Release</h4>
+                  <ul className="changelog-bullets">
+                    <li>Added complete Vite+React application generator output format.</li>
+                    <li>Integrated Stitch design systems engine.</li>
+                    <li>Launched documentation viewer and component showcase tabs.</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
