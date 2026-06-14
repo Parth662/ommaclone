@@ -291,7 +291,7 @@ export default function Login({ onLoginSuccess, onBack, onNavigateSignup }) {
         if (prev >= loadingMessages.length - 1) {
           clearInterval(stepInterval);
           setTimeout(() => {
-            const finalEmail = isGoogle ? "google.user@gmail.com" : (email || "guest@omma.build");
+            const finalEmail = localStorage.getItem("userEmail") || email || "guest@omma.build";
             onLoginSuccess(finalEmail);
           }, 300);
           return prev;
