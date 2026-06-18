@@ -6,6 +6,9 @@ const connectDB = require("./config/db");
 const Otp = require("./models/Otp");
 const { sendVerificationEmail } = require("./config/nodemailer");
 
+// ── NEW: Razorpay payment router ──────────────────────────────────────────────
+const paymentRoutes = require("./routes/paymentRoutes");
+
 const app = express();
 const PORT = process.env.PORT || 5001;
 
@@ -24,9 +27,11 @@ app.get("/", (req, res) => {
   res.json({ success: true, message: "OMMA Auth API is running." });
 });
 
+// ── NEW: Mount payment routes ─────────────────────────────────────────────────
+app.use("/api/payment", paymentRoutes);
+
 /**
  * @route   POST /send-otp
- * @desc    Generate, save, and send a 6-digit verification code.
  */
 app.post("/send-otp", async (req, res) => {
   try {
@@ -42,13 +47,10 @@ app.post("/send-otp", async (req, res) => {
 
     const cleanEmail = email.trim().toLowerCase();
 
-    // 1. Generate 6-digit random code
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
-    // 2. Delete any previous OTP documents for this email
     await Otp.deleteMany({ email: cleanEmail });
 
-    // 3. Save new OTP in MongoDB
     const otpDoc = new Otp({
       email: cleanEmail,
       otp,
@@ -56,10 +58,8 @@ app.post("/send-otp", async (req, res) => {
     });
     await otpDoc.save();
 
-    // 4. Send OTP to user's email
     const emailResult = await sendVerificationEmail(cleanEmail, otp);
 
-    // Respond with success
     return res.status(200).json({
       success: true,
       message: "Verification code sent successfully.",
@@ -78,7 +78,6 @@ app.post("/send-otp", async (req, res) => {
 
 /**
  * @route   POST /verify-otp
- * @desc    Verify the 6-digit code. If valid, issue a JWT token.
  */
 app.post("/verify-otp", async (req, res) => {
   try {
@@ -90,22 +89,18 @@ app.post("/verify-otp", async (req, res) => {
 
     const cleanEmail = email.trim().toLowerCase();
 
-    // 1. Fetch OTP record
     const record = await Otp.findOne({ email: cleanEmail });
 
     if (!record) {
       return res.status(400).json({ success: false, message: "Invalid or expired verification code." });
     }
 
-    // 2. Check value matches
     if (record.otp !== otp.trim()) {
       return res.status(400).json({ success: false, message: "Incorrect verification code." });
     }
 
-    // 3. Verification successful, clean up database
     await Otp.deleteOne({ _id: record._id });
 
-    // 4. Sign JWT token
     const token = jwt.sign(
       { email: cleanEmail },
       process.env.JWT_SECRET || "fallback_secret",
@@ -131,7 +126,6 @@ app.post("/verify-otp", async (req, res) => {
 
 /**
  * @route   POST /google-login
- * @desc    Verify Firebase ID token and return application JWT.
  */
 app.post("/google-login", async (req, res) => {
   try {
@@ -141,7 +135,6 @@ app.post("/google-login", async (req, res) => {
       return res.status(400).json({ success: false, message: "Firebase ID token is required." });
     }
 
-    // Decode token structure
     const decoded = jwt.decode(idToken);
     if (!decoded) {
       return res.status(400).json({ success: false, message: "Invalid ID token format." });
@@ -154,7 +147,6 @@ app.post("/google-login", async (req, res) => {
 
     console.log(`[Firebase Auth] Google login request for: ${email}`);
 
-    // Sign app session JWT
     const token = jwt.sign(
       { email: email.toLowerCase() },
       process.env.JWT_SECRET || "fallback_secret",
@@ -196,7 +188,7 @@ const verifyToken = (req, res, next) => {
   }
 };
 
-// Protected endpoint to verify jwt setup
+// Protected endpoint
 app.get("/me", verifyToken, (req, res) => {
   res.json({
     success: true,

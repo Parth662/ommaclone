@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { initiatePayment, usdToInrPaise } from "../utils/razorpay";
 
 const PLANS = [
   {
@@ -17,6 +18,7 @@ const PLANS = [
     btnLabel: "Current Plan",
     btnStyle: "btn-current",
     highlight: false,
+    payable: false,
   },
   {
     name: "Pro",
@@ -36,6 +38,7 @@ const PLANS = [
     btnLabel: "Upgrade to Pro",
     btnStyle: "btn-pro",
     highlight: true,
+    payable: true,
   },
   {
     name: "Max",
@@ -53,6 +56,7 @@ const PLANS = [
     btnLabel: "Upgrade to Max",
     btnStyle: "btn-max",
     highlight: false,
+    payable: true,
   },
 ];
 
@@ -62,16 +66,88 @@ const CREDIT_PACKS = [
   { credits: "5,000", price: "$35", desc: "Best value" },
 ];
 
-export default function UpgradeModal({ onClose }) {
+export default function UpgradeModal({ onClose, userEmail = "", onUpgradeSuccess }) {
   const [activeTab, setActiveTab] = useState("subscription");
+  const [loadingKey, setLoadingKey] = useState(null);  // tracks which button is loading
+  const [toast, setToast] = useState(null);            // { type: "success"|"error", msg }
+
+  const showToast = (type, msg) => {
+    setToast({ type, msg });
+    setTimeout(() => setToast(null), 4000);
+  };
+
+  const handlePlanPayment = (plan) => {
+    if (!plan.payable) return;
+
+    initiatePayment({
+      amount: usdToInrPaise(plan.price),
+      currency: "INR",
+      description: `OMMA ${plan.name} Plan`,
+      userEmail,
+      onLoading: (val) => setLoadingKey(val ? plan.name : null),
+      onSuccess: (data) => {
+        showToast("success", `🎉 ${plan.name} Plan activated! Payment ID: ${data.paymentId}`);
+        onUpgradeSuccess?.({ plan: plan.name, ...data });
+        setTimeout(() => onClose(), 2500);
+      },
+      onFailure: (msg) => {
+        if (msg !== "Payment cancelled.") {
+          showToast("error", `❌ ${msg}`);
+        }
+      },
+    });
+  };
+
+  const handleCreditPayment = (pack) => {
+    initiatePayment({
+      amount: usdToInrPaise(pack.price),
+      currency: "INR",
+      description: `OMMA ${pack.credits} Credits`,
+      userEmail,
+      onLoading: (val) => setLoadingKey(val ? `credits-${pack.credits}` : null),
+      onSuccess: (data) => {
+        showToast("success", `⚡ ${pack.credits} credits added! Payment ID: ${data.paymentId}`);
+        setTimeout(() => onClose(), 2500);
+      },
+      onFailure: (msg) => {
+        if (msg !== "Payment cancelled.") {
+          showToast("error", `❌ ${msg}`);
+        }
+      },
+    });
+  };
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div
-        className="upgrade-modal-box"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Header */}
+      <div className="upgrade-modal-box" onClick={(e) => e.stopPropagation()}>
+
+        {/* Toast notification */}
+        {toast && (
+          <div
+            style={{
+              position: "absolute",
+              top: 16,
+              left: "50%",
+              transform: "translateX(-50%)",
+              zIndex: 999,
+              background: toast.type === "success"
+                ? "rgba(62, 207, 142, 0.15)"
+                : "rgba(240, 106, 106, 0.15)",
+              border: `1px solid ${toast.type === "success" ? "rgba(62,207,142,0.4)" : "rgba(240,106,106,0.4)"}`,
+              color: toast.type === "success" ? "#3ecf8e" : "#f06a6a",
+              padding: "10px 20px",
+              borderRadius: 10,
+              fontSize: 13,
+              fontFamily: "var(--font-body)",
+              whiteSpace: "nowrap",
+              backdropFilter: "blur(8px)",
+            }}
+          >
+            {toast.msg}
+          </div>
+        )}
+
+        {/* Header — unchanged */}
         <div className="upgrade-modal-header">
           <div>
             <div className="upgrade-modal-title">Upgrade your plan</div>
@@ -80,7 +156,7 @@ export default function UpgradeModal({ onClose }) {
           <button className="modal-close" onClick={onClose}>✕</button>
         </div>
 
-        {/* Tabs */}
+        {/* Tabs — unchanged */}
         <div className="upgrade-tabs">
           <button
             className={`upgrade-tab${activeTab === "subscription" ? " active" : ""}`}
@@ -98,7 +174,7 @@ export default function UpgradeModal({ onClose }) {
 
         <div className="upgrade-tab-divider" />
 
-        {/* Subscription Plans Tab */}
+        {/* Subscription Plans Tab — UI unchanged, buttons wired */}
         {activeTab === "subscription" && (
           <div className="upgrade-plans">
             {PLANS.map((plan) => (
@@ -106,7 +182,6 @@ export default function UpgradeModal({ onClose }) {
                 key={plan.name}
                 className={`upgrade-plan-card${plan.highlight ? " highlighted" : ""}`}
               >
-                {/* Badge */}
                 {plan.badge && (
                   <div className={`plan-badge ${plan.badgeStyle}`}>
                     {plan.badge}
@@ -129,15 +204,23 @@ export default function UpgradeModal({ onClose }) {
                   ))}
                 </div>
 
-                <button className={`plan-btn ${plan.btnStyle}`}>
-                  {plan.btnLabel}
+                <button
+                  className={`plan-btn ${plan.btnStyle}`}
+                  onClick={() => handlePlanPayment(plan)}
+                  disabled={!plan.payable || loadingKey === plan.name}
+                  style={{
+                    opacity: loadingKey === plan.name ? 0.7 : 1,
+                    cursor: !plan.payable ? "default" : loadingKey === plan.name ? "wait" : "pointer",
+                  }}
+                >
+                  {loadingKey === plan.name ? "Processing..." : plan.btnLabel}
                 </button>
               </div>
             ))}
           </div>
         )}
 
-        {/* Buy Credits Tab */}
+        {/* Buy Credits Tab — UI unchanged, buttons wired */}
         {activeTab === "credits" && (
           <div className="upgrade-credits">
             <p className="credits-tab-desc">
@@ -155,8 +238,17 @@ export default function UpgradeModal({ onClose }) {
                   <div className="credit-pack-credits">{pack.credits} credits</div>
                   <div className="credit-pack-price">{pack.price}</div>
                   <div className="credit-pack-desc">{pack.desc}</div>
-                  <button className="plan-btn btn-pro" style={{ marginTop: 16 }}>
-                    Buy Now
+                  <button
+                    className="plan-btn btn-pro"
+                    style={{
+                      marginTop: 16,
+                      opacity: loadingKey === `credits-${pack.credits}` ? 0.7 : 1,
+                      cursor: loadingKey === `credits-${pack.credits}` ? "wait" : "pointer",
+                    }}
+                    onClick={() => handleCreditPayment(pack)}
+                    disabled={loadingKey === `credits-${pack.credits}`}
+                  >
+                    {loadingKey === `credits-${pack.credits}` ? "Processing..." : "Buy Now"}
                   </button>
                 </div>
               ))}
