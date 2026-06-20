@@ -1,42 +1,59 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
 
-const INITIAL_CHATS = [
-  {
-    id: "grimoire",
-    title: "Enchanted AI Grimoire 3D Experience",
-    timeAgo: "2d ago",
-    messagesCount: 3,
-    image: "/grimoire_3d_thumbnail.png",
-    favorite: false,
-  },
-  {
-    id: "cyberpunk",
-    title: "Cyberpunk Landing Interface",
-    timeAgo: "4d ago",
-    messagesCount: 12,
-    image: "/cyberpunk_canvas_thumbnail.png",
-    favorite: true,
-  },
-  {
-    id: "modular",
-    title: "Modular Asset Architecture",
-    timeAgo: "Oct 24",
-    messagesCount: 5,
-    image: "/modular_architecture_thumbnail.png",
-    favorite: false,
-  },
-];
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5001";
 
 export default function MyChats({ onOpenChat }) {
-  const [chats, setChats] = useState(INITIAL_CHATS);
+  const [chats, setChats] = useState([]);
   const [activeTab, setActiveTab] = useState("chats"); // "chats" or "favorites"
   const [searchQuery, setSearchQuery] = useState("");
+  const [loading, setLoading] = useState(true);
 
-  const toggleFavorite = (id, e) => {
+  useEffect(() => {
+    const fetchChats = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) return;
+        const response = await axios.get(`${API_BASE_URL}/chats`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (response.data.success) {
+          setChats(response.data.chats);
+        }
+      } catch (err) {
+        console.error("Error fetching chats:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchChats();
+  }, []);
+
+  const toggleFavorite = async (id, e) => {
     e.stopPropagation();
+    const chat = chats.find(c => c.id === id);
+    if (!chat) return;
+
+    const newFavoriteState = !chat.favorite;
+
+    // Optimistic UI update
     setChats(
-      chats.map((c) => (c.id === id ? { ...c, favorite: !c.favorite } : c))
+      chats.map((c) => (c.id === id ? { ...c, favorite: newFavoriteState } : c))
     );
+
+    try {
+      const token = localStorage.getItem("token");
+      await axios.put(`${API_BASE_URL}/chats/${id}`, { favorite: newFavoriteState }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+    } catch (err) {
+      console.error("Error updating favorite status:", err);
+      // Revert if error
+      setChats(
+        chats.map((c) => (c.id === id ? { ...c, favorite: !newFavoriteState } : c))
+      );
+      alert("Failed to update favorite status.");
+    }
   };
 
   const filteredChats = chats.filter((c) => {
@@ -44,6 +61,18 @@ export default function MyChats({ onOpenChat }) {
     const matchesTab = activeTab === "chats" || c.favorite;
     return matchesSearch && matchesTab;
   });
+
+  if (loading) {
+    return (
+      <div className="mychats-page" style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "calc(100vh - 64px)" }}>
+        <div className="auth-spinner">
+          <div className="spinner-outer" />
+          <div className="spinner-inner" />
+          <span className="spinner-icon">⚡</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="mychats-page">

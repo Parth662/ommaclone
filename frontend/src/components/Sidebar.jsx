@@ -8,11 +8,7 @@ const NAV_ITEMS = [
   { icon: "🔍", label: "Search", page: "search" },
 ];
 
-const RECENT_CHATS = [
-  { id: "grimoire", label: "Enchanted AI Grimoire 3D ...", sub: "3 messages · Mon" },
-];
-
-export default function Sidebar({ activePage, onNavigate, onOpenChat, onUpgrade, isPro = false, userEmail = "guest@omma.build" }) {
+export default function Sidebar({ activePage, onNavigate, onOpenChat, onUpgrade, isPro = false, userEmail = "guest@omma.build", chatCredits = 500, projectCredits = 100, recentChats = [] }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const popoverRef = useRef(null);
 
@@ -66,16 +62,22 @@ export default function Sidebar({ activePage, onNavigate, onOpenChat, onUpgrade,
         </nav>
 
         <div className="nav-label">RECENT</div>
-        {RECENT_CHATS.map((chat) => (
-          <div
-            key={chat.id}
-            className="recent-chat-item"
-            onClick={() => onOpenChat(chat.id)}
-          >
-            <div className="recent-chat-title">{chat.label}</div>
-            <div className="recent-chat-sub">{chat.sub}</div>
+        {recentChats && recentChats.length > 0 ? (
+          recentChats.map((chat) => (
+            <div
+              key={chat.id}
+              className="recent-chat-item"
+              onClick={() => onOpenChat(chat.id)}
+            >
+              <div className="recent-chat-title">{chat.title}</div>
+              <div className="recent-chat-sub">{chat.messagesCount} messages · {chat.timeAgo}</div>
+            </div>
+          ))
+        ) : (
+          <div style={{ padding: "8px 16px", fontSize: 11.5, color: "var(--text-muted)", fontStyle: "italic" }}>
+            No recent chats
           </div>
-        ))}
+        )}
       </div>
 
       <div className="sidebar-footer-container">
@@ -173,8 +175,15 @@ export default function Sidebar({ activePage, onNavigate, onOpenChat, onUpgrade,
           </div>
         )}
 
-        <div className="sidebar-credits-box">
-          <span className="credits-text">0 credits</span>
+        <div className="sidebar-credits-box" onClick={onUpgrade} style={{ cursor: "pointer" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+            <span className="credits-text" style={{ fontSize: 11, display: "flex", alignItems: "center", gap: 5 }}>
+              💬 {chatCredits} chat
+            </span>
+            <span className="credits-text" style={{ fontSize: 11, display: "flex", alignItems: "center", gap: 5 }}>
+              ⚡ {projectCredits} project
+            </span>
+          </div>
           <span className="free-badge">{isPro ? "PRO" : "FREE"}</span>
         </div>
 

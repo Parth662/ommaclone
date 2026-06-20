@@ -1,5 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
 import "./Signup.css";
+import axios from "axios";
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5001";
 
 export default function Signup({ onSignupSuccess, onNavigateLogin, onBack }) {
   const [fullName, setFullName] = useState("");
@@ -236,7 +239,7 @@ export default function Signup({ onSignupSuccess, onNavigateLogin, onBack }) {
     return e;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const validationErrors = validate();
     if (Object.keys(validationErrors).length > 0) {
@@ -245,6 +248,26 @@ export default function Signup({ onSignupSuccess, onNavigateLogin, onBack }) {
     }
     setErrors({});
     setIsLoading(true);
+
+    try {
+      const response = await axios.post(`${API_BASE_URL}/signup`, {
+        fullName: fullName.trim(),
+        email: email.trim(),
+        password: password
+      });
+      const data = response.data;
+      if (data.success) {
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("userEmail", data.email);
+      } else {
+        setErrors({ submit: data.message || "Failed to create account." });
+        setIsLoading(false);
+      }
+    } catch (err) {
+      const errMsg = err.response?.data?.message || err.message || "Failed to create account. Try again.";
+      setErrors({ submit: errMsg });
+      setIsLoading(false);
+    }
   };
 
   const handleBackAction = () => {
@@ -304,6 +327,7 @@ export default function Signup({ onSignupSuccess, onNavigateLogin, onBack }) {
 
               {/* Form */}
               <form className="signup-form" onSubmit={handleSubmit} noValidate>
+                {errors.submit && <p className="input-error-msg text-center" style={{ marginBottom: 15, width: "100%", color: "#f06a6a" }}>{errors.submit}</p>}
                 {/* Full Name */}
                 <div className="input-group">
                   <label htmlFor="fullName">Full Name</label>

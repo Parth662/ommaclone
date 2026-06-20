@@ -1,6 +1,6 @@
 import React from "react";
 
-export default function Topbar({ title, onUpgrade, onNavigate }) {
+export default function Topbar({ title, onUpgrade, onNavigate, chatCredits = 500, projectCredits = 100 }) {
   return (
     <div className="topbar">
       <div className="topbar-left">
@@ -13,9 +13,12 @@ export default function Topbar({ title, onUpgrade, onNavigate }) {
           className="credits-badge credits-badge-clickable"
           onClick={onUpgrade}
           title="Upgrade plan"
+          style={{ display: "flex", alignItems: "center", gap: "6px" }}
         >
           <div className="credits-dot" />
-          0 credits
+          <span>💬 {chatCredits}</span>
+          <span style={{ opacity: 0.4 }}>|</span>
+          <span>⚡ {projectCredits}</span>
         </div>
         <button
           className="icon-btn"

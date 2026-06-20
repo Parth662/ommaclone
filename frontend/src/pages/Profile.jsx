@@ -1,106 +1,91 @@
 import React, { useState, useEffect } from "react";
 import "./Profile.css";
+import axios from "axios";
 
-export default function Profile({ userEmail, onBack }) {
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5001";
+
+export default function Profile({ userEmail, chatCredits, projectCredits, onCreditsRefilled, onBack }) {
   const [activeTab, setActiveTab] = useState("activity"); // "activity" or "logins"
-  const [credits, setCredits] = useState(25);
+  const [chatCreditsLocal, setChatCreditsLocal] = useState(chatCredits ?? 500);
+  const [projectCreditsLocal, setProjectCreditsLocal] = useState(projectCredits ?? 100);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
+  const [displayName, setDisplayName] = useState(userEmail ? userEmail.split("@")[0] : "guest");
+  const [activityLogs, setActivityLogs] = useState([]);
+  const [loginLogs, setLoginLogs] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const displayName = userEmail ? userEmail.split("@")[0] : "guest";
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) {
+          setLoading(false);
+          return;
+        }
 
-  // Mock activity logs
-  const activityLogs = [
-    {
-      id: 1,
-      type: "generation",
-      action: "Created 3D Scene",
-      details: "Generated Cyberpunk Landing Interface with hologram wireframes",
-      timestamp: "Today, 3:15 PM",
-      icon: "📦"
-    },
-    {
-      id: 2,
-      type: "edit",
-      action: "Modified Code",
-      details: "Optimized materials and lighting on Enchanted AI Grimoire",
-      timestamp: "Yesterday, 6:45 PM",
-      icon: "⚙️"
-    },
-    {
-      id: 3,
-      type: "upload",
-      action: "Uploaded Asset",
-      details: "Imported drone_v2.glb model (3.4 MB) to model library",
-      timestamp: "Jun 4, 2026, 11:22 AM",
-      icon: "📤"
-    },
-    {
-      id: 4,
-      type: "export",
-      action: "Exported Project",
-      details: "Downloaded HTML/CSS code bundle for Modular Asset Dashboard",
-      timestamp: "Jun 2, 2026, 4:10 PM",
-      icon: "⚡"
-    },
-    {
-      id: 5,
-      type: "auth",
-      action: "Account Setup",
-      details: "Registered and secured account via email verification code",
-      timestamp: "Jun 2, 2026, 4:00 PM",
-      icon: "🛡️"
-    }
-  ];
+        const response = await axios.get(`${API_BASE_URL}/user/profile`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
 
-  // Mock login logs (including the current active session!)
-  const loginLogs = [
-    {
-      id: 1,
-      time: "Today, 3:35 PM",
-      device: "MacBook Pro - Chrome (macOS)",
-      location: "Mumbai, India",
-      ip: "103.44.82.11",
-      status: "Active",
-      active: true
-    },
-    {
-      id: 2,
-      time: "Today, 9:55 AM",
-      device: "MacBook Pro - Chrome (macOS)",
-      location: "Mumbai, India",
-      ip: "103.44.82.11",
-      status: "Success",
-      active: false
-    },
-    {
-      id: 3,
-      time: "Jun 3, 2026, 6:30 PM",
-      device: "MacBook Pro - Chrome (macOS)",
-      location: "Mumbai, India",
-      ip: "103.44.82.11",
-      status: "Success",
-      active: false
-    },
-    {
-      id: 4,
-      time: "Jun 2, 2026, 4:00 PM",
-      device: "iPhone 15 - Safari (iOS)",
-      location: "Mumbai, India",
-      ip: "103.44.82.11",
-      status: "Success",
-      active: false
-    }
-  ];
+        if (response.data.success) {
+          const { fullName, email, chatCredits: cc, projectCredits: pc, activityLogs, loginLogs } = response.data.user;
+          setDisplayName(fullName || email.split("@")[0]);
+          setChatCreditsLocal(cc !== undefined ? cc : 500);
+          setProjectCreditsLocal(pc !== undefined ? pc : 100);
+          setActivityLogs(activityLogs || []);
+          setLoginLogs(loginLogs || []);
+        }
+      } catch (error) {
+        console.error("Error fetching user profile:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const handleRequestCredits = () => {
-    if (credits >= 100) {
+    fetchUserProfile();
+  }, [userEmail]);
+
+  const handleRequestCredits = async () => {
+    if (chatCreditsLocal >= 500 && projectCreditsLocal >= 100) {
       setToastMessage("You already have maximum free trial credits!");
       setShowToast(true);
       return;
     }
-    setCredits((prev) => Math.min(100, prev + 25));
-    setToastMessage("Successfully added +25 credits to your account! ⚡");
+    try {
+      const token = localStorage.getItem("token");
+      const response = await axios.post(`${API_BASE_URL}/user/credits`, {}, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      if (response.data.success) {
+        setChatCreditsLocal(response.data.chatCredits !== undefined ? response.data.chatCredits : 500);
+        setProjectCreditsLocal(response.data.projectCredits !== undefined ? response.data.projectCredits : 100);
+        onCreditsRefilled?.();
+        setToastMessage("Successfully refilled your credits! ⚡");
+        
+        // Refresh activity logs by adding the new credit event at the top
+        setActivityLogs(prev => [
+          {
+            _id: Math.random().toString(),
+            type: "export",
+            action: "Requested Credits",
+            details: "Claimed free credit refill (500 chat, 100 project credits)",
+            timestamp: "Today, " + new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }),
+            icon: "⚡"
+          },
+          ...prev
+        ]);
+      } else {
+        setToastMessage("Failed to request credits.");
+      }
+    } catch (err) {
+      console.error(err);
+      setToastMessage("Failed to request credits.");
+    }
     setShowToast(true);
   };
 
@@ -158,22 +143,41 @@ export default function Profile({ userEmail, onBack }) {
             </div>
 
             {/* Credit Usage Glass Card */}
-            <div className="profile-card credit-card glass-panel">
-              <div className="credit-card-header">
+            <div className="profile-card credit-card glass-panel" style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+              <div className="credit-card-header" style={{ marginBottom: 0 }}>
                 <h2 className="card-title text-headline-sm">Credits & Usage</h2>
                 <span className="plan-badge">FREE TRIAL</span>
               </div>
-              <div className="credit-display">
-                <span className="credit-amount">{credits}</span>
-                <span className="credit-limit">/ 100 credits</span>
+              
+              {/* Chat Credits */}
+              <div>
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6, fontSize: 13, color: "var(--text-secondary)" }}>
+                  <span>💬 Chat Credits</span>
+                  <span>{chatCreditsLocal} / 500</span>
+                </div>
+                <div className="progress-bar-container" style={{ margin: 0, height: 6 }}>
+                  <div 
+                    className="progress-bar-fill" 
+                    style={{ width: `${(chatCreditsLocal / 500) * 100}%`, background: "var(--accent)" }}
+                  />
+                </div>
               </div>
-              <div className="progress-bar-container">
-                <div 
-                  className="progress-bar-fill" 
-                  style={{ width: `${(credits / 100) * 100}%` }}
-                />
+
+              {/* Project Credits */}
+              <div>
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6, fontSize: 13, color: "var(--text-secondary)" }}>
+                  <span>⚡ Project Credits</span>
+                  <span>{projectCreditsLocal} / 100</span>
+                </div>
+                <div className="progress-bar-container" style={{ margin: 0, height: 6 }}>
+                  <div 
+                    className="progress-bar-fill" 
+                    style={{ width: `${(projectCreditsLocal / 100) * 100}%`, background: "var(--green)" }}
+                  />
+                </div>
               </div>
-              <div className="credit-footer">
+
+              <div className="credit-footer" style={{ marginTop: 8 }}>
                 <span className="reset-timer text-code-label">Resets in 27 days</span>
                 <button 
                   type="button" 
@@ -233,8 +237,8 @@ export default function Profile({ userEmail, onBack }) {
                   
                   /* ACTIVITY TIMELINE LOGS */
                   <div className="activity-timeline">
-                    {activityLogs.map((log) => (
-                      <div key={log.id} className="timeline-item">
+                    {activityLogs.map((log, index) => (
+                      <div key={log._id || log.id || index} className="timeline-item">
                         <div className="timeline-icon-box">
                           <span className="timeline-icon">{log.icon}</span>
                           <div className="timeline-line" />
@@ -265,8 +269,8 @@ export default function Profile({ userEmail, onBack }) {
                         </tr>
                       </thead>
                       <tbody>
-                        {loginLogs.map((log) => (
-                          <tr key={log.id} className={log.active ? "active-row" : ""}>
+                        {loginLogs.map((log, index) => (
+                          <tr key={log._id || log.id || index} className={log.active ? "active-row" : ""}>
                             <td className="time-cell">
                               {log.time}
                               {log.active && <span className="current-badge">Active Session</span>}

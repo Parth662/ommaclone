@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import axios from "axios";
 
 const PLANS = [
   {
@@ -62,8 +63,35 @@ const CREDIT_PACKS = [
   { credits: "5,000", price: "$35", desc: "Best value" },
 ];
 
-export default function UpgradeModal({ onClose }) {
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5001";
+
+export default function UpgradeModal({ onClose, chatCredits = 0, projectCredits = 0, onCreditsRefilled, onUpgradeSuccess }) {
   const [activeTab, setActiveTab] = useState("subscription");
+  const [loading, setLoading] = useState(false);
+
+  const handlePurchase = async () => {
+    setLoading(true);
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        alert("Please log in to purchase credits.");
+        return;
+      }
+      const response = await axios.post(`${API_BASE_URL}/user/credits`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (response.data.success) {
+        alert("Purchase successful! Your credits have been refilled to 500 chat and 100 project credits. ⚡");
+        onCreditsRefilled?.();
+        onUpgradeSuccess?.();
+      }
+    } catch (err) {
+      console.error("Error purchasing credits:", err);
+      alert("Failed to purchase credits. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="modal-overlay" onClick={onClose}>
@@ -75,7 +103,9 @@ export default function UpgradeModal({ onClose }) {
         <div className="upgrade-modal-header">
           <div>
             <div className="upgrade-modal-title">Upgrade your plan</div>
-            <div className="upgrade-modal-sub">0 credits remaining</div>
+            <div className="upgrade-modal-sub">
+              💬 {chatCredits} chat & ⚡ {projectCredits} project credits remaining
+            </div>
           </div>
           <button className="modal-close" onClick={onClose}>✕</button>
         </div>
@@ -129,8 +159,12 @@ export default function UpgradeModal({ onClose }) {
                   ))}
                 </div>
 
-                <button className={`plan-btn ${plan.btnStyle}`}>
-                  {plan.btnLabel}
+                <button 
+                  className={`plan-btn ${plan.btnStyle}`}
+                  onClick={plan.name === "Free" ? undefined : handlePurchase}
+                  disabled={loading}
+                >
+                  {loading && plan.name !== "Free" ? "Processing..." : plan.btnLabel}
                 </button>
               </div>
             ))}
@@ -155,8 +189,13 @@ export default function UpgradeModal({ onClose }) {
                   <div className="credit-pack-credits">{pack.credits} credits</div>
                   <div className="credit-pack-price">{pack.price}</div>
                   <div className="credit-pack-desc">{pack.desc}</div>
-                  <button className="plan-btn btn-pro" style={{ marginTop: 16 }}>
-                    Buy Now
+                  <button 
+                    className="plan-btn btn-pro" 
+                    style={{ marginTop: 16 }}
+                    onClick={handlePurchase}
+                    disabled={loading}
+                  >
+                    {loading ? "Processing..." : "Buy Now"}
                   </button>
                 </div>
               ))}

@@ -1,7 +1,37 @@
 import React, { useState, useEffect, useRef } from "react";
 import { getAIResponse } from "../data/data.js";
 
-export default function ChatView({ initialMessages, onBack }) {
+const extractHtml = (text) => {
+  if (!text) return null;
+  const match = text.match(/```html([\s\S]*?)```/);
+  return match ? match[1].trim() : null;
+};
+
+function AIThinkingBlock({ reasoning }) {
+  const [collapsed, setCollapsed] = useState(true);
+
+  if (!reasoning) return null;
+
+  return (
+    <div className="thinking-container">
+      <div 
+        className="thinking-header" 
+        onClick={() => setCollapsed(!collapsed)}
+      >
+        <span className="thinking-icon">🧠</span>
+        <span className="thinking-title">Thinking Process</span>
+        <span className="thinking-toggle-icon">{collapsed ? "▼" : "▲"}</span>
+      </div>
+      {!collapsed && (
+        <div className="thinking-content">
+          {reasoning}
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default function ChatView({ initialMessages, onBack, chatCredits = 500, onUseChatCredit, activeChatId, onAppendMessages, onGenerateAIResponse }) {
   const [messages, setMessages] = useState(initialMessages || []);
   const [inputValue, setInputValue] = useState("");
   const [isTyping, setIsTyping] = useState(false);
@@ -12,6 +42,7 @@ export default function ChatView({ initialMessages, onBack }) {
   const [urlTitleInput, setUrlTitleInput] = useState("");
   const [isDragging, setIsDragging] = useState(false);
   const [lightboxImage, setLightboxImage] = useState(null);
+  const [activePreviewHtml, setActivePreviewHtml] = useState(null);
 
   const messagesEndRef = useRef(null);
   const photoInputRef = useRef(null);
@@ -33,50 +64,98 @@ export default function ChatView({ initialMessages, onBack }) {
   }, [initialMessages]);
 
   useEffect(() => {
-    if (messages && messages.length > 0 && !respondedRef.current) {
-      const lastMsg = messages[messages.length - 1];
-      if (lastMsg.role === "user" && messages.length <= 2) {
-        respondedRef.current = true;
-        setIsTyping(true);
-        const timer = setTimeout(() => {
+    const fetchInitialResponse = async () => {
+      if (messages && messages.length > 0 && !respondedRef.current) {
+        const lastMsg = messages[messages.length - 1];
+        if (lastMsg.role === "user" && messages.length <= 2) {
+          respondedRef.current = true;
+          setIsTyping(true);
+
+          const chatHistoryForAPI = messages.map(m => ({
+            role: m.role === "ai" ? "assistant" : "user",
+            content: m.text
+          }));
+
+          const responseObj = await onGenerateAIResponse?.(chatHistoryForAPI) || { content: "", reasoning: "" };
+          const responseText = typeof responseObj === "string" ? responseObj : (responseObj.content || "");
+          const reasoningText = typeof responseObj === "string" ? "" : (responseObj.reasoning || "");
           setIsTyping(false);
           const aiMsg = { 
             role: "ai", 
-            text: getAIResponse(lastMsg.text, lastMsg.attachments || []), 
-            hasButton: true 
+            text: responseText, 
+            reasoning: reasoningText,
+            hasButton: responseText.includes("```html")
           };
           setMessages((prev) => {
-            if (prev.length > 0 && prev[prev.length - 1].role === "ai" && (prev[prev.length - 1].text.includes("Based on that") || prev[prev.length - 1].text.includes("build you a Three.js"))) {
+            if (prev.length > 0 && prev[prev.length - 1].role === "ai") {
               return prev;
             }
             return [...prev, aiMsg];
           });
-        }, 1600);
-        return () => clearTimeout(timer);
+          onAppendMessages?.([aiMsg]);
+        }
       }
-    }
-  }, [messages]);
+    };
+    fetchInitialResponse();
+  }, [messages, onGenerateAIResponse, onAppendMessages]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isTyping]);
 
-  const sendMessage = (text, messageAttachments = []) => {
+  const sendMessage = async (text, messageAttachments = []) => {
     if (!text.trim() && messageAttachments.length === 0) return;
     const userMsg = { role: "user", text, attachments: messageAttachments };
     setMessages((prev) => [...prev, userMsg]);
     setIsTyping(true);
 
-    setTimeout(() => {
-      setIsTyping(false);
-      const aiMsg = { role: "ai", text: getAIResponse(text, messageAttachments), hasButton: true };
-      setMessages((prev) => [...prev, aiMsg]);
-    }, 1600);
+    const chatHistoryForAPI = [
+      ...messages.map(m => ({
+        role: m.role === "ai" ? "assistant" : "user",
+        content: m.text
+      })),
+      { role: "user", content: text }
+    ];
+
+    const responseObj = await onGenerateAIResponse?.(chatHistoryForAPI) || { content: "", reasoning: "" };
+    const responseText = typeof responseObj === "string" ? responseObj : (responseObj.content || "");
+    const reasoningText = typeof responseObj === "string" ? "" : (responseObj.reasoning || "");
+    setIsTyping(false);
+    const aiMsg = { 
+      role: "ai", 
+      text: responseText, 
+      reasoning: reasoningText,
+      hasButton: responseText.includes("```html") 
+    };
+    setMessages((prev) => [...prev, aiMsg]);
+    
+    // Save messages to database
+    onAppendMessages?.([
+      userMsg,
+      aiMsg
+    ]);
   };
 
-  const handleSend = () => {
+  const handleSend = async () => {
     const val = inputValue.trim();
     if (!val && attachments.length === 0) return;
+
+    if (chatCredits < 1) {
+      const systemMsg = {
+        role: "ai",
+        text: "<span style='color: #f06a6a; font-weight: 600;'>⚠️ Out of Chat Credits!</span><br/>You have consumed all your chat credits. Please refill them in your Profile page or upgrade your plan to continue.",
+        hasButton: false
+      };
+      setMessages((prev) => [...prev, systemMsg]);
+      return;
+    }
+
+    const success = await onUseChatCredit?.();
+    if (!success) {
+      alert("Failed to consume chat credit. Please check your connection.");
+      return;
+    }
+
     setInputValue("");
     sendMessage(val, attachments);
     setAttachments([]);
@@ -198,21 +277,58 @@ export default function ChatView({ initialMessages, onBack }) {
               {msg.role === "ai" ? "F" : "YW"}
             </div>
             <div className="msg-bubble">
+              {msg.role === "ai" && <AIThinkingBlock reasoning={msg.reasoning} />}
               <span dangerouslySetInnerHTML={{ __html: msg.text }} />
               {msg.hasButton && (
-                <>
-                  <br /><br />
+                <div className="ai-output-actions">
                   <button
                     className="ai-output-btn"
-                    onClick={() =>
-                      alert(
-                        "In a full build, this would generate and display the live code preview!"
-                      )
-                    }
+                    onClick={() => {
+                      const htmlCode = extractHtml(msg.text);
+                      if (htmlCode) {
+                        setActivePreviewHtml(htmlCode);
+                      } else {
+                        alert("No HTML code block found in response.");
+                      }
+                    }}
+                    style={{ marginTop: 0 }}
                   >
                     ⚡ View Generated Output
                   </button>
-                </>
+                  <button
+                    className="ai-action-btn"
+                    onClick={() => {
+                      const htmlCode = extractHtml(msg.text);
+                      if (htmlCode) {
+                        navigator.clipboard.writeText(htmlCode);
+                        alert("📋 Code copied to clipboard!");
+                      } else {
+                        alert("No HTML code block found in response.");
+                      }
+                    }}
+                  >
+                    📋 Copy HTML
+                  </button>
+                  <button
+                    className="ai-action-btn"
+                    onClick={() => {
+                      const htmlCode = extractHtml(msg.text);
+                      if (htmlCode) {
+                        const blob = new Blob([htmlCode], { type: "text/html" });
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement("a");
+                        a.href = url;
+                        a.download = "omma-3d-scene.html";
+                        a.click();
+                        URL.revokeObjectURL(url);
+                      } else {
+                        alert("No HTML code block found in response.");
+                      }
+                    }}
+                  >
+                    💾 Download HTML
+                  </button>
+                </div>
               )}
 
               {/* Message Attachments Rendering */}
@@ -519,6 +635,55 @@ export default function ChatView({ initialMessages, onBack }) {
               {lightboxImage.name} ({lightboxImage.size})
             </div>
           </div>
+        </div>
+      )}
+
+      {activePreviewHtml && (
+        <div className="preview-modal-overlay" style={{
+          position: "fixed",
+          top: 0, left: 0, right: 0, bottom: 0,
+          background: "rgba(10, 10, 11, 0.93)",
+          backdropFilter: "blur(20px)",
+          zIndex: 9999,
+          display: "flex",
+          flexDirection: "column",
+          padding: "24px",
+        }}>
+          <div style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            marginBottom: "16px",
+            gap: "16px",
+          }}>
+            <span style={{ fontSize: 16, fontWeight: 600, color: "#fff", display: "flex", alignItems: "center", gap: "8px" }}>
+              ⚡ Live Output Preview
+            </span>
+            <button onClick={() => setActivePreviewHtml(null)} style={{
+              background: "rgba(255,255,255,0.07)",
+              border: "1px solid rgba(255,255,255,0.1)",
+              color: "#fff",
+              padding: "6px 14px",
+              borderRadius: "8px",
+              cursor: "pointer",
+              marginLeft: "auto",
+              fontWeight: 500,
+              fontFamily: "var(--font-body)",
+            }}>
+              Close Preview
+            </button>
+          </div>
+          <iframe
+            title="Live Code Preview"
+            srcDoc={activePreviewHtml}
+            style={{
+              flex: 1,
+              width: "100%",
+              border: "1px solid rgba(255,255,255,0.1)",
+              borderRadius: "12px",
+              background: "#ffffff",
+            }}
+          />
         </div>
       )}
     </div>

@@ -1,4 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5001";
 
 const TABS = [
   { id: "general",    label: "General" },
@@ -76,14 +79,39 @@ const ghostBtn = {
   cursor: "pointer", whiteSpace: "nowrap",
 };
 
-function GeneralTab({ userEmail }) {
-  const name = userEmail?.split("@")[0] || "user";
-  const [displayName, setDisplayName] = useState(name);
-  const [about, setAbout] = useState("");
-  const [smartRouting, setSmartRouting] = useState(false);
-  const [webSearch, setWebSearch] = useState(true);
-  const [soundEffects, setSoundEffects] = useState(true);
+function GeneralTab({ userData, onSave }) {
+  const [displayName, setDisplayName] = useState(userData?.fullName || userData?.email?.split("@")[0] || "");
+  const [about, setAbout] = useState(userData?.about || "");
+  const [smartRouting, setSmartRouting] = useState(userData?.settings?.smartRouting || false);
+  const [webSearch, setWebSearch] = useState(userData?.settings?.webSearch ?? true);
+  const [soundEffects, setSoundEffects] = useState(userData?.settings?.soundEffects ?? true);
   const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    if (userData) {
+      setDisplayName(userData.fullName || userData.email.split("@")[0]);
+      setAbout(userData.about || "");
+      setSmartRouting(userData.settings?.smartRouting || false);
+      setWebSearch(userData.settings?.webSearch ?? true);
+      setSoundEffects(userData.settings?.soundEffects ?? true);
+    }
+  }, [userData]);
+
+  const handleSubmit = async () => {
+    const success = await onSave({
+      fullName: displayName,
+      about,
+      settings: {
+        smartRouting,
+        webSearch,
+        soundEffects
+      }
+    });
+    if (success) {
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    }
+  };
 
   return (
     <div>
@@ -110,7 +138,7 @@ function GeneralTab({ userEmail }) {
       </SettingRow>
       <div style={{ marginTop: 24 }}>
         <button
-          onClick={() => { setSaved(true); setTimeout(() => setSaved(false), 2000); }}
+          onClick={handleSubmit}
           style={{
             background: saved ? "var(--green)" : "var(--accent)",
             border: "none", color: "#fff",
@@ -125,9 +153,61 @@ function GeneralTab({ userEmail }) {
   );
 }
 
-function AppearanceTab() {
-  const [theme, setTheme] = useState("dark");
-  const [fontSize, setFontSize] = useState("medium");
+function AppearanceTab({ userData, onSave }) {
+  const [theme, setTheme] = useState(userData?.settings?.theme || "dark");
+  const [fontSize, setFontSize] = useState(userData?.settings?.fontSize || "medium");
+  const [codeFont, setCodeFont] = useState(userData?.settings?.codeFont || "System Mono");
+
+  useEffect(() => {
+    if (userData) {
+      setTheme(userData.settings?.theme || "dark");
+      setFontSize(userData.settings?.fontSize || "medium");
+      setCodeFont(userData.settings?.codeFont || "System Mono");
+    }
+  }, [userData]);
+
+  const changeTheme = (val) => {
+    setTheme(val);
+    onSave({
+      settings: {
+        smartRouting: userData?.settings?.smartRouting || false,
+        webSearch: userData?.settings?.webSearch ?? true,
+        soundEffects: userData?.settings?.soundEffects ?? true,
+        theme: val,
+        fontSize,
+        codeFont
+      }
+    });
+  };
+
+  const changeFontSize = (val) => {
+    setFontSize(val);
+    onSave({
+      settings: {
+        smartRouting: userData?.settings?.smartRouting || false,
+        webSearch: userData?.settings?.webSearch ?? true,
+        soundEffects: userData?.settings?.soundEffects ?? true,
+        theme,
+        fontSize: val,
+        codeFont
+      }
+    });
+  };
+
+  const changeCodeFont = (val) => {
+    setCodeFont(val);
+    onSave({
+      settings: {
+        smartRouting: userData?.settings?.smartRouting || false,
+        webSearch: userData?.settings?.webSearch ?? true,
+        soundEffects: userData?.settings?.soundEffects ?? true,
+        theme,
+        fontSize,
+        codeFont: val
+      }
+    });
+  };
+
   return (
     <div>
       <div style={{ marginBottom: 24 }}>
@@ -140,7 +220,7 @@ function AppearanceTab() {
           ].map(t => (
             <div key={t.id} style={{ textAlign: "center" }}>
               <div
-                onClick={() => setTheme(t.id)}
+                onClick={() => changeTheme(t.id)}
                 style={{
                   width: 76, height: 48, borderRadius: 8,
                   background: t.bg,
@@ -162,7 +242,7 @@ function AppearanceTab() {
       <SettingRow label="Font size" description="Interface text size">
         <div style={{ display: "flex", gap: 6 }}>
           {["Small","Medium","Large"].map(s => (
-            <button key={s} onClick={() => setFontSize(s.toLowerCase())} style={{
+            <button key={s} onClick={() => changeFontSize(s.toLowerCase())} style={{
               background: fontSize === s.toLowerCase() ? "rgba(123,110,246,0.15)" : "var(--bg-elevated)",
               border: fontSize === s.toLowerCase() ? "1px solid rgba(123,110,246,0.4)" : "1px solid var(--border)",
               color: fontSize === s.toLowerCase() ? "#a78bfa" : "var(--text-secondary)",
@@ -174,7 +254,7 @@ function AppearanceTab() {
         </div>
       </SettingRow>
       <SettingRow label="Code font" description="Font used in code blocks" noBorder>
-        <select style={{ ...ghostBtn }}>
+        <select value={codeFont} onChange={e => changeCodeFont(e.target.value)} style={{ ...ghostBtn }}>
           <option>System Mono</option>
           <option>Fira Code</option>
           <option>JetBrains Mono</option>
@@ -184,7 +264,7 @@ function AppearanceTab() {
   );
 }
 
-function AccountTab({ userEmail }) {
+function AccountTab({ userEmail, onDeleteAccount }) {
   const [showDelete, setShowDelete] = useState(false);
   return (
     <div>
@@ -212,7 +292,7 @@ function AccountTab({ userEmail }) {
         ) : (
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <span style={{ fontSize: 12.5, color: "var(--text-secondary)" }}>Are you sure?</span>
-            <button style={{ background: "#f06a6a", border: "none", color: "#fff", padding: "7px 14px", borderRadius: 7, fontSize: 12.5, fontFamily: "var(--font-body)", cursor: "pointer" }}>Yes, delete</button>
+            <button onClick={onDeleteAccount} style={{ background: "#f06a6a", border: "none", color: "#fff", padding: "7px 14px", borderRadius: 7, fontSize: 12.5, fontFamily: "var(--font-body)", cursor: "pointer" }}>Yes, delete</button>
             <button onClick={() => setShowDelete(false)} style={ghostBtn}>Cancel</button>
           </div>
         )}
@@ -221,26 +301,45 @@ function AccountTab({ userEmail }) {
   );
 }
 
-function BillingTab() {
+function BillingTab({ userData }) {
+  const chatCredits = userData?.chatCredits ?? 500;
+  const projectCredits = userData?.projectCredits ?? 100;
   return (
     <div>
       <div style={{ padding: 18, borderRadius: 10, border: "1px solid var(--border-hover)", background: "var(--bg-card)", marginBottom: 24, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <div>
           <div style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 3 }}>Current plan</div>
           <div style={{ fontSize: 19, fontWeight: 700, fontFamily: "var(--font-head)", color: "var(--text-primary)" }}>Free</div>
-          <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 2 }}>0 credits remaining</div>
+          <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 4, display: "flex", flexDirection: "column", gap: "2px" }}>
+            <span>💬 {chatCredits} chat credits remaining</span>
+            <span>⚡ {projectCredits} project credits remaining</span>
+          </div>
         </div>
         <button style={{ background: "var(--accent)", border: "none", color: "#fff", padding: "9px 18px", borderRadius: 8, fontSize: 13, fontWeight: 600, fontFamily: "var(--font-body)", cursor: "pointer" }}>Upgrade</button>
       </div>
-      <div style={{ marginBottom: 24 }}>
+
+      {/* Chat Credits Usage */}
+      <div style={{ marginBottom: 16 }}>
         <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 7 }}>
-          <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>Credits used</span>
-          <span style={{ fontSize: 12.5, color: "var(--text-muted)" }}>0 / 0</span>
+          <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>Chat credits used</span>
+          <span style={{ fontSize: 12.5, color: "var(--text-muted)" }}>{500 - chatCredits} / 500</span>
         </div>
         <div style={{ height: 5, borderRadius: 3, background: "var(--bg-elevated)" }}>
-          <div style={{ width: "0%", height: "100%", background: "var(--accent)", borderRadius: 3 }} />
+          <div style={{ width: `${((500 - chatCredits) / 500) * 100}%`, height: "100%", background: "var(--accent)", borderRadius: 3 }} />
         </div>
       </div>
+
+      {/* Project Credits Usage */}
+      <div style={{ marginBottom: 24 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 7 }}>
+          <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>Project credits used</span>
+          <span style={{ fontSize: 12.5, color: "var(--text-muted)" }}>{100 - projectCredits} / 100</span>
+        </div>
+        <div style={{ height: 5, borderRadius: 3, background: "var(--bg-elevated)" }}>
+          <div style={{ width: `${((100 - projectCredits) / 100) * 100}%`, height: "100%", background: "var(--green)", borderRadius: 3 }} />
+        </div>
+      </div>
+
       <SettingRow label="Payment method" description="No payment method added"><button style={ghostBtn}>Add card</button></SettingRow>
       <SettingRow label="Billing history" description="View and download past invoices"><button style={ghostBtn}>View all</button></SettingRow>
       <SettingRow label="Billing email" description="Receipts sent to your account email" noBorder><button style={ghostBtn}>Edit</button></SettingRow>
@@ -248,15 +347,28 @@ function BillingTab() {
   );
 }
 
-function UsageTab() {
+function UsageTab({ userData }) {
+  const chatCredits = userData?.chatCredits ?? 500;
+  const projectCredits = userData?.projectCredits ?? 100;
+  const usedChatCredits = Math.max(0, 500 - chatCredits);
+  const usedProjectCredits = Math.max(0, 100 - projectCredits);
+  const totalUsed = usedChatCredits + usedProjectCredits;
+
   const months = ["Jan","Feb","Mar","Apr","May","Jun"];
-  const values = [12, 30, 18, 45, 27, 0];
-  const max = 50;
+  const values = [12, 30, 18, 45, 27, totalUsed];
+  const max = Math.max(50, totalUsed);
+
+  // Derive counts from activityLogs
+  const activityLogs = userData?.activityLogs || [];
+  const apiRequests = activityLogs.length;
+  const componentsGenerated = activityLogs.filter(l => l.type === "generation").length || 0;
+  const chatsStarted = activityLogs.filter(l => l.type === "auth" || (l.type === "generation" && l.action.includes("Chat"))).length || 1;
+
   return (
     <div>
       <div style={{ padding: 18, borderRadius: 10, border: "1px solid var(--border)", background: "var(--bg-card)", marginBottom: 24 }}>
         <div style={{ fontSize: 11, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 4 }}>Total credits used</div>
-        <div style={{ fontSize: 34, fontWeight: 700, fontFamily: "var(--font-head)", letterSpacing: -1.5, color: "var(--text-primary)" }}>132</div>
+        <div style={{ fontSize: 34, fontWeight: 700, fontFamily: "var(--font-head)", letterSpacing: -1.5, color: "var(--text-primary)" }}>{totalUsed}</div>
         <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 2 }}>Since account creation</div>
       </div>
       <div style={{ marginBottom: 24 }}>
@@ -268,16 +380,16 @@ function UsageTab() {
                 width: "100%",
                 height: `${(values[i] / max) * 72}px`,
                 minHeight: 4, borderRadius: "3px 3px 0 0",
-                background: i === 5 ? "rgba(123,110,246,0.18)" : "linear-gradient(180deg, #7b6ef6 0%, rgba(123,110,246,0.35) 100%)",
+                background: i === 5 ? "rgba(123,110,246,0.35)" : "linear-gradient(180deg, #7b6ef6 0%, rgba(123,110,246,0.35) 100%)",
               }} />
               <span style={{ fontSize: 10.5, color: "var(--text-muted)" }}>{m}</span>
             </div>
           ))}
         </div>
       </div>
-      <SettingRow label="API requests" description="Total requests made via API"><span style={{ fontSize: 13, color: "var(--text-secondary)", fontWeight: 500 }}>0</span></SettingRow>
-      <SettingRow label="Components generated" description="Total AI-generated components"><span style={{ fontSize: 13, color: "var(--text-secondary)", fontWeight: 500 }}>7</span></SettingRow>
-      <SettingRow label="Chats started" description="Total conversations" noBorder><span style={{ fontSize: 13, color: "var(--text-secondary)", fontWeight: 500 }}>4</span></SettingRow>
+      <SettingRow label="API requests" description="Total requests made via API"><span style={{ fontSize: 13, color: "var(--text-secondary)", fontWeight: 500 }}>{apiRequests}</span></SettingRow>
+      <SettingRow label="Components generated" description="Total AI-generated components"><span style={{ fontSize: 13, color: "var(--text-secondary)", fontWeight: 500 }}>{componentsGenerated}</span></SettingRow>
+      <SettingRow label="Chats started" description="Total conversations" noBorder><span style={{ fontSize: 13, color: "var(--text-secondary)", fontWeight: 500 }}>{chatsStarted}</span></SettingRow>
     </div>
   );
 }
@@ -314,14 +426,87 @@ function ReferralsTab({ userEmail }) {
 
 export default function Settings({ userEmail }) {
   const [activeTab, setActiveTab] = useState("general");
+  const [userData, setUserData] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  const fetchProfile = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        setLoading(false);
+        return;
+      }
+      const response = await axios.get(`${API_BASE_URL}/user/profile`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (response.data.success) {
+        setUserData(response.data.user);
+      }
+    } catch (err) {
+      console.error("Error fetching settings profile:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchProfile();
+  }, [userEmail]);
+
+  const handleSaveProfile = async (updatedFields) => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) return false;
+      const response = await axios.put(`${API_BASE_URL}/user/profile`, updatedFields, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (response.data.success) {
+        setUserData(response.data.user);
+        return true;
+      }
+    } catch (err) {
+      console.error("Error saving profile:", err);
+    }
+    return false;
+  };
+
+  const handleDeleteAccount = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) return;
+      const response = await axios.delete(`${API_BASE_URL}/user/account`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (response.data.success) {
+        // Log out user and reload
+        localStorage.removeItem("token");
+        localStorage.removeItem("userEmail");
+        window.location.reload();
+      }
+    } catch (err) {
+      console.error("Error deleting account:", err);
+    }
+  };
 
   const renderTab = () => {
+    if (loading) {
+      return (
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", padding: 40 }}>
+          <div className="auth-spinner">
+            <div className="spinner-outer" />
+            <div className="spinner-inner" />
+            <span className="spinner-icon">⚡</span>
+          </div>
+        </div>
+      );
+    }
+
     switch (activeTab) {
-      case "general":    return <GeneralTab userEmail={userEmail} />;
-      case "appearance": return <AppearanceTab />;
-      case "account":    return <AccountTab userEmail={userEmail} />;
-      case "billing":    return <BillingTab />;
-      case "usage":      return <UsageTab />;
+      case "general":    return <GeneralTab userData={userData} onSave={handleSaveProfile} />;
+      case "appearance": return <AppearanceTab userData={userData} onSave={handleSaveProfile} />;
+      case "account":    return <AccountTab userEmail={userEmail} onDeleteAccount={handleDeleteAccount} />;
+      case "billing":    return <BillingTab userData={userData} />;
+      case "usage":      return <UsageTab userData={userData} />;
       case "referrals":  return <ReferralsTab userEmail={userEmail} />;
       default:           return null;
     }
