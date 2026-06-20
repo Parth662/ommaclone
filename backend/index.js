@@ -7,6 +7,9 @@ const authRoutes = require("./routes/auth");
 const userRoutes = require("./routes/user");
 const chatsRoutes = require("./routes/chats");
 
+// ── NEW: Razorpay payment router ──────────────────────────────────────────────
+const paymentRoutes = require("./routes/paymentRoutes");
+
 const app = express();
 const PORT = process.env.PORT || 5001;
 
@@ -21,6 +24,9 @@ app.use(express.json());
 app.get("/", (req, res) => {
   res.json({ success: true, message: "OMMA Auth API is running." });
 });
+
+// ── NEW: Mount payment routes ─────────────────────────────────────────────────
+app.use("/api/payment", paymentRoutes);
 
 // Mount Routes
 app.use("/", authRoutes);
