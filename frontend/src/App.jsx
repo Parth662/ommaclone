@@ -121,7 +121,7 @@ export default function App() {
   const [userEmail, setUserEmail] = useState("guest@omma.build");
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [isPro, setIsPro] = useState(false);
-  const [credits, setCredits] = useState({ chat: 500, project: 100 });
+  const [credits, setCredits] = useState({ chat: 25, project: 25, limit: 25 });
   const [activeChatId, setActiveChatId] = useState(null);
 
   const [recentChats, setRecentChats] = useState([]);
@@ -134,10 +134,11 @@ export default function App() {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (response.data.success) {
-        const { chatCredits, projectCredits } = response.data.user;
+        const { credits: remaining, dailyLimit } = response.data.user;
         setCredits({
-          chat: chatCredits !== undefined ? chatCredits : 500,
-          project: projectCredits !== undefined ? projectCredits : 100
+          chat: remaining !== undefined ? remaining : 25,
+          project: remaining !== undefined ? remaining : 25,
+          limit: dailyLimit !== undefined ? dailyLimit : 25
         });
       }
     } catch (err) {
@@ -185,7 +186,7 @@ export default function App() {
 
       if (credits.project < 1) {
         setShowUpgrade(true);
-        alert("You have run out of project credits! Please request a refill or upgrade your plan.");
+        alert("You have run out of daily credits! Please request a refill or upgrade your plan to continue chatting.");
         return;
       }
 
@@ -195,8 +196,9 @@ export default function App() {
         });
         if (response.data.success) {
           setCredits({
-            chat: response.data.chatCredits,
-            project: response.data.projectCredits
+            chat: response.data.credits,
+            project: response.data.credits,
+            limit: response.data.dailyLimit || 25
           });
         } else {
           alert("Failed to consume project credit. Please check your connection.");
@@ -291,8 +293,9 @@ export default function App() {
       });
       if (response.data.success) {
         setCredits({
-          chat: response.data.chatCredits,
-          project: response.data.projectCredits
+          chat: response.data.credits,
+          project: response.data.credits,
+          limit: response.data.dailyLimit || 25
         });
         return true;
       }
@@ -342,7 +345,7 @@ export default function App() {
       localStorage.removeItem("token");
       localStorage.removeItem("userEmail");
       setUserEmail("guest@omma.build");
-      setCredits({ chat: 500, project: 100 });
+      setCredits({ chat: 25, project: 25, limit: 25 });
       setActiveChatId(null);
     }
     setActivePage(page);
@@ -426,7 +429,7 @@ export default function App() {
       <Profile
         userEmail={userEmail}
         chatCredits={credits.chat}
-        projectCredits={credits.project}
+        dailyLimit={credits.limit}
         onCreditsRefilled={fetchCredits}
         onBack={() => handleNavigate("discover")}
       />

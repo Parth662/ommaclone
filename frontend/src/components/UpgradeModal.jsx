@@ -148,39 +148,41 @@ export default function UpgradeModal({ onClose, userEmail = "", onUpgradeSuccess
           </div>
         )}
 
-        <button className="modal-close-btn" onClick={onClose}>
-          ✕
-        </button>
-
-        <div className="upgrade-header">
-          <h2>Upgrade Account</h2>
-          <p className="upgrade-subtitle">
-            Unlock advanced features, higher limits, and infinite creative possibilities.
-          </p>
+        <div className="upgrade-modal-header">
+          <div>
+            <div className="upgrade-modal-title">Upgrade Account</div>
+            <div className="upgrade-modal-sub">
+              Unlock advanced features, higher limits, and infinite creative possibilities.
+            </div>
+          </div>
+          <button className="modal-close" onClick={onClose}>
+            ✕
+          </button>
         </div>
 
         <div className="upgrade-tabs">
           <button
-            className={`upgrade-tab-btn${activeTab === "subscription" ? " active" : ""}`}
+            className={`upgrade-tab${activeTab === "subscription" ? " active" : ""}`}
             onClick={() => setActiveTab("subscription")}
           >
             Subscription Plans
           </button>
           <button
-            className={`upgrade-tab-btn${activeTab === "credits" ? " active" : ""}`}
+            className={`upgrade-tab${activeTab === "credits" ? " active" : ""}`}
             onClick={() => setActiveTab("credits")}
           >
             Buy Credits
           </button>
         </div>
+        <div className="upgrade-tab-divider"></div>
 
         {/* Subscription Tab */}
         {activeTab === "subscription" && (
-          <div className="upgrade-plans-grid">
+          <div className="upgrade-plans">
             {PLANS.map((plan) => (
               <div
                 key={plan.name}
-                className={`plan-card${plan.highlight ? " highlight" : ""}`}
+                className={`upgrade-plan-card${plan.highlight ? " highlighted" : ""}`}
               >
                 {plan.badge && (
                   <div className={`plan-badge ${plan.badgeStyle}`}>

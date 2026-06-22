@@ -4,10 +4,10 @@ import axios from "axios";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5001";
 
-export default function Profile({ userEmail, chatCredits, projectCredits, onCreditsRefilled, onBack }) {
+export default function Profile({ userEmail, chatCredits, dailyLimit, onCreditsRefilled, onBack }) {
   const [activeTab, setActiveTab] = useState("activity"); // "activity" or "logins"
-  const [chatCreditsLocal, setChatCreditsLocal] = useState(chatCredits ?? 500);
-  const [projectCreditsLocal, setProjectCreditsLocal] = useState(projectCredits ?? 100);
+  const [chatCreditsLocal, setChatCreditsLocal] = useState(chatCredits ?? 25);
+  const [dailyLimitLocal, setDailyLimitLocal] = useState(dailyLimit ?? 25);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
   const [displayName, setDisplayName] = useState(userEmail ? userEmail.split("@")[0] : "guest");
@@ -31,10 +31,10 @@ export default function Profile({ userEmail, chatCredits, projectCredits, onCred
         });
 
         if (response.data.success) {
-          const { fullName, email, chatCredits: cc, projectCredits: pc, activityLogs, loginLogs } = response.data.user;
+          const { fullName, email, credits: rem, dailyLimit: dl, activityLogs, loginLogs } = response.data.user;
           setDisplayName(fullName || email.split("@")[0]);
-          setChatCreditsLocal(cc !== undefined ? cc : 500);
-          setProjectCreditsLocal(pc !== undefined ? pc : 100);
+          setChatCreditsLocal(rem !== undefined ? rem : 25);
+          setDailyLimitLocal(dl !== undefined ? dl : 25);
           setActivityLogs(activityLogs || []);
           setLoginLogs(loginLogs || []);
         }
@@ -49,8 +49,8 @@ export default function Profile({ userEmail, chatCredits, projectCredits, onCred
   }, [userEmail]);
 
   const handleRequestCredits = async () => {
-    if (chatCreditsLocal >= 500 && projectCreditsLocal >= 100) {
-      setToastMessage("You already have maximum free trial credits!");
+    if (chatCreditsLocal >= dailyLimitLocal) {
+      setToastMessage("You already have maximum daily credits!");
       setShowToast(true);
       return;
     }
@@ -62,8 +62,8 @@ export default function Profile({ userEmail, chatCredits, projectCredits, onCred
         }
       });
       if (response.data.success) {
-        setChatCreditsLocal(response.data.chatCredits !== undefined ? response.data.chatCredits : 500);
-        setProjectCreditsLocal(response.data.projectCredits !== undefined ? response.data.projectCredits : 100);
+        setChatCreditsLocal(response.data.credits !== undefined ? response.data.credits : 25);
+        setDailyLimitLocal(response.data.dailyLimit !== undefined ? response.data.dailyLimit : 25);
         onCreditsRefilled?.();
         setToastMessage("Successfully refilled your credits! ⚡");
         
@@ -73,7 +73,7 @@ export default function Profile({ userEmail, chatCredits, projectCredits, onCred
             _id: Math.random().toString(),
             type: "export",
             action: "Requested Credits",
-            details: "Claimed free credit refill (500 chat, 100 project credits)",
+            details: `Claimed free credit refill (${response.data.dailyLimit || 25} daily credits)`,
             timestamp: "Today, " + new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }),
             icon: "⚡"
           },
@@ -149,42 +149,28 @@ export default function Profile({ userEmail, chatCredits, projectCredits, onCred
                 <span className="plan-badge">FREE TRIAL</span>
               </div>
               
-              {/* Chat Credits */}
+              {/* Daily Credits */}
               <div>
                 <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6, fontSize: 13, color: "var(--text-secondary)" }}>
-                  <span>💬 Chat Credits</span>
-                  <span>{chatCreditsLocal} / 500</span>
+                  <span>🪙 Daily Credits</span>
+                  <span>{chatCreditsLocal} / {dailyLimitLocal}</span>
                 </div>
                 <div className="progress-bar-container" style={{ margin: 0, height: 6 }}>
                   <div 
                     className="progress-bar-fill" 
-                    style={{ width: `${(chatCreditsLocal / 500) * 100}%`, background: "var(--accent)" }}
-                  />
-                </div>
-              </div>
-
-              {/* Project Credits */}
-              <div>
-                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6, fontSize: 13, color: "var(--text-secondary)" }}>
-                  <span>⚡ Project Credits</span>
-                  <span>{projectCreditsLocal} / 100</span>
-                </div>
-                <div className="progress-bar-container" style={{ margin: 0, height: 6 }}>
-                  <div 
-                    className="progress-bar-fill" 
-                    style={{ width: `${(projectCreditsLocal / 100) * 100}%`, background: "var(--green)" }}
+                    style={{ width: `${Math.min(100, Math.max(0, (chatCreditsLocal / dailyLimitLocal) * 100))}%`, background: "var(--accent)" }}
                   />
                 </div>
               </div>
 
               <div className="credit-footer" style={{ marginTop: 8 }}>
-                <span className="reset-timer text-code-label">Resets in 27 days</span>
+                <span className="reset-timer text-code-label">Resets daily</span>
                 <button 
                   type="button" 
                   className="btn-credits-request" 
                   onClick={handleRequestCredits}
                 >
-                  Get Free Credits
+                  Get Daily Credits
                 </button>
               </div>
             </div>

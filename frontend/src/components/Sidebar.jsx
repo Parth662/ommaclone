@@ -178,10 +178,10 @@ export default function Sidebar({ activePage, onNavigate, onOpenChat, onUpgrade,
         <div className="sidebar-credits-box" onClick={onUpgrade} style={{ cursor: "pointer" }}>
           <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
             <span className="credits-text" style={{ fontSize: 11, display: "flex", alignItems: "center", gap: 5 }}>
-              💬 {chatCredits} chat
+              🪙 {chatCredits} credits
             </span>
-            <span className="credits-text" style={{ fontSize: 11, display: "flex", alignItems: "center", gap: 5 }}>
-              ⚡ {projectCredits} project
+            <span className="credits-text" style={{ fontSize: 10, opacity: 0.65, display: "flex", alignItems: "center", gap: 5 }}>
+              Resets daily
             </span>
           </div>
           <span className="free-badge">{isPro ? "PRO" : "FREE"}</span>

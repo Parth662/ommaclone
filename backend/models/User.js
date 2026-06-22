@@ -25,6 +25,14 @@ const userSchema = new mongoose.Schema({
     type: Number,
     default: 25,
   },
+  dailyLimit: {
+    type: Number,
+    default: 25,
+  },
+  lastCreditsReset: {
+    type: Date,
+    default: Date.now,
+  },
   chatCredits: {
     type: Number,
     default: 500,

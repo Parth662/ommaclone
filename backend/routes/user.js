@@ -15,14 +15,35 @@ router.get("/profile", verifyToken, async (req, res) => {
     }
     
     let needsSave = false;
-    if (user.chatCredits === undefined) {
-      user.chatCredits = 500;
+    if (user.credits === undefined) {
+      user.credits = 25;
       needsSave = true;
     }
-    if (user.projectCredits === undefined) {
-      user.projectCredits = 100;
+    if (user.dailyLimit === undefined) {
+      user.dailyLimit = 25;
       needsSave = true;
     }
+    if (!user.lastCreditsReset) {
+      user.lastCreditsReset = new Date();
+      needsSave = true;
+    }
+
+    // Check daily credits reset
+    const now = new Date();
+    const lastReset = new Date(user.lastCreditsReset);
+    const nowMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const lastResetMidnight = new Date(lastReset.getFullYear(), lastReset.getMonth(), lastReset.getDate());
+    
+    if (nowMidnight.getTime() > lastResetMidnight.getTime()) {
+      user.credits = user.dailyLimit || 25;
+      user.lastCreditsReset = now;
+      needsSave = true;
+    }
+
+    // Keep legacy fields consistent
+    user.chatCredits = user.credits;
+    user.projectCredits = user.credits;
+
     if (needsSave) {
       await user.save();
     }
@@ -74,7 +95,7 @@ router.put("/profile", verifyToken, async (req, res) => {
 
 /**
  * @route   POST /user/credits
- * @desc    Refill credits back to 500 chat and 100 project credits.
+ * @desc    Refill credits back to daily limit.
  */
 router.post("/credits", verifyToken, async (req, res) => {
   try {
@@ -83,18 +104,19 @@ router.post("/credits", verifyToken, async (req, res) => {
       return res.status(404).json({ success: false, message: "User not found." });
     }
 
-    if (user.chatCredits >= 500 && user.projectCredits >= 100) {
-      return res.status(400).json({ success: false, message: "Maximum credits reached." });
+    const limit = user.dailyLimit || 25;
+    if (user.credits >= limit) {
+      return res.status(400).json({ success: false, message: "Maximum daily limit already reached." });
     }
 
-    user.chatCredits = 500;
-    user.projectCredits = 100;
-    user.credits = 100;
+    user.credits = limit;
+    user.chatCredits = limit;
+    user.projectCredits = limit;
 
     user.activityLogs.unshift({
       type: "export",
       action: "Requested Credits",
-      details: "Claimed free credit refill (500 chat, 100 project credits)",
+      details: `Claimed free credit refill (${limit} daily credits)`,
       timestamp: "Today, " + new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }),
       icon: "⚡"
     });
@@ -107,8 +129,9 @@ router.post("/credits", verifyToken, async (req, res) => {
     return res.status(200).json({ 
       success: true, 
       credits: user.credits,
-      chatCredits: user.chatCredits,
-      projectCredits: user.projectCredits
+      dailyLimit: user.dailyLimit,
+      chatCredits: user.credits,
+      projectCredits: user.credits
     });
   } catch (error) {
     console.error("Error in POST /user/credits:", error);
@@ -118,7 +141,7 @@ router.post("/credits", verifyToken, async (req, res) => {
 
 /**
  * @route   POST /user/deduct-credit
- * @desc    Deduct 1 chat credit or 1 project credit.
+ * @desc    Deduct 1 credit for chat or project action from the daily balance.
  */
 router.post("/deduct-credit", verifyToken, async (req, res) => {
   try {
@@ -132,37 +155,36 @@ router.post("/deduct-credit", verifyToken, async (req, res) => {
       return res.status(404).json({ success: false, message: "User not found." });
     }
 
-    if (user.chatCredits === undefined) user.chatCredits = 500;
-    if (user.projectCredits === undefined) user.projectCredits = 100;
+    if (user.credits === undefined) user.credits = 25;
+    if (user.dailyLimit === undefined) user.dailyLimit = 25;
+    if (!user.lastCreditsReset) user.lastCreditsReset = new Date();
 
-    if (type === "chat") {
-      if (user.chatCredits < 1) {
-        return res.status(403).json({ success: false, message: "Insufficient chat credits." });
-      }
-      user.chatCredits -= 1;
-      
-      user.activityLogs.unshift({
-        type: "generation",
-        action: "Chat Message Sent",
-        details: "Consumed 1 chat credit",
-        timestamp: "Today, " + new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }),
-        icon: "💬"
-      });
-    } else {
-      if (user.projectCredits < 1) {
-        return res.status(403).json({ success: false, message: "Insufficient project credits." });
-      }
-      user.projectCredits -= 1;
-      user.credits = Math.max(0, user.projectCredits); // Map to legacy credits too
-
-      user.activityLogs.unshift({
-        type: "generation",
-        action: "Project Generated",
-        details: "Consumed 1 project credit",
-        timestamp: "Today, " + new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }),
-        icon: "⚡"
-      });
+    // Check daily credits reset
+    const now = new Date();
+    const lastReset = new Date(user.lastCreditsReset);
+    const nowMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const lastResetMidnight = new Date(lastReset.getFullYear(), lastReset.getMonth(), lastReset.getDate());
+    
+    if (nowMidnight.getTime() > lastResetMidnight.getTime()) {
+      user.credits = user.dailyLimit || 25;
+      user.lastCreditsReset = now;
     }
+
+    if (user.credits < 1) {
+      return res.status(403).json({ success: false, message: "Insufficient daily credits. Your limit resets tomorrow." });
+    }
+
+    user.credits -= 1;
+    user.chatCredits = user.credits;
+    user.projectCredits = user.credits;
+
+    user.activityLogs.unshift({
+      type: "generation",
+      action: type === "chat" ? "Chat Message Sent" : "Project Generated",
+      details: `Consumed 1 daily credit (${user.credits}/${user.dailyLimit} remaining)`,
+      timestamp: "Today, " + new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }),
+      icon: type === "chat" ? "💬" : "⚡"
+    });
 
     if (user.activityLogs.length > 20) {
       user.activityLogs = user.activityLogs.slice(0, 20);
@@ -171,8 +193,10 @@ router.post("/deduct-credit", verifyToken, async (req, res) => {
     await user.save();
     return res.status(200).json({
       success: true,
-      chatCredits: user.chatCredits,
-      projectCredits: user.projectCredits
+      credits: user.credits,
+      dailyLimit: user.dailyLimit,
+      chatCredits: user.credits,
+      projectCredits: user.credits
     });
   } catch (error) {
     console.error("Error in POST /user/deduct-credit:", error);
