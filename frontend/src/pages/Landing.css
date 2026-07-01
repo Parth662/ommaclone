@@ -1456,13 +1456,26 @@
   display: flex;
   flex-direction: column;
   position: relative;
-  transition: all 0.3s ease;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.omma-landing .landing-price-card:hover {
+  transform: translateY(-8px) scale(1.015);
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4), 0 0 20px rgba(255, 255, 255, 0.03);
 }
 
 .omma-landing .landing-price-card.highlighted {
   background: rgba(255, 255, 255, 0.02);
   border-color: rgba(0, 240, 255, 0.35);
   box-shadow: 0 0 30px rgba(0, 240, 255, 0.06);
+}
+
+.omma-landing .landing-price-card.highlighted:hover {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(0, 240, 255, 0.6);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5), 0 0 30px rgba(0, 240, 255, 0.25);
 }
 
 .omma-landing .price-badge {
@@ -1477,6 +1490,14 @@
   letter-spacing: 0.1em;
   padding: 4px 12px;
   border-radius: 100px;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.omma-landing .landing-price-card.highlighted:hover .price-badge,
+.omma-landing .landing-credit-card.highlighted:hover .price-badge {
+  background: #00f0ff;
+  box-shadow: 0 0 15px rgba(0, 240, 255, 0.5);
+  transform: translateX(-50%) scale(1.05);
 }
 
 .omma-landing .plan-name {
@@ -1584,13 +1605,26 @@
   display: flex;
   flex-direction: column;
   position: relative;
-  transition: all 0.3s ease;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.omma-landing .landing-credit-card:hover {
+  transform: translateY(-8px) scale(1.015);
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4), 0 0 20px rgba(255, 255, 255, 0.03);
 }
 
 .omma-landing .landing-credit-card.highlighted {
   background: rgba(255, 255, 255, 0.02);
   border-color: rgba(0, 240, 255, 0.35);
   box-shadow: 0 0 30px rgba(0, 240, 255, 0.06);
+}
+
+.omma-landing .landing-credit-card.highlighted:hover {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(0, 240, 255, 0.6);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5), 0 0 30px rgba(0, 240, 255, 0.25);
 }
 
 .omma-landing .credit-header {

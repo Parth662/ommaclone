@@ -8,7 +8,8 @@
   padding: 0;
 }
 
-:root {
+:root,
+html[data-theme="dark"] {
   --bg-base: #0a0a0b;
   --bg-surface: #111114;
   --bg-elevated: #18181d;
@@ -29,6 +30,68 @@
   --font-head: 'Syne', sans-serif;
   --font-body: 'DM Sans', sans-serif;
 }
+
+html[data-theme="light"] {
+  --bg-base: #f4f4f7;
+  --bg-surface: #ffffff;
+  --bg-elevated: #e9e9f0;
+  --bg-card: #dfdfe8;
+  --bg-hover: #d5d5e2;
+  --border: rgba(0, 0, 0, 0.08);
+  --border-hover: rgba(0, 0, 0, 0.16);
+  --text-primary: #18181b;
+  --text-secondary: #52525b;
+  --text-muted: #a1a1aa;
+  --accent: #6366f1;
+  --accent-glow: rgba(99, 102, 241, 0.15);
+  --accent-dim: #4f46e5;
+  --green: #10b981;
+  --amber: #f59e0b;
+  --red: #ef4444;
+}
+
+@media (prefers-color-scheme: light) {
+  html[data-theme="default"] {
+    --bg-base: #f4f4f7;
+    --bg-surface: #ffffff;
+    --bg-elevated: #e9e9f0;
+    --bg-card: #dfdfe8;
+    --bg-hover: #d5d5e2;
+    --border: rgba(0, 0, 0, 0.08);
+    --border-hover: rgba(0, 0, 0, 0.16);
+    --text-primary: #18181b;
+    --text-secondary: #52525b;
+    --text-muted: #a1a1aa;
+    --accent: #6366f1;
+    --accent-glow: rgba(99, 102, 241, 0.15);
+    --accent-dim: #4f46e5;
+    --green: #10b981;
+    --amber: #f59e0b;
+    --red: #ef4444;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  html[data-theme="default"] {
+    --bg-base: #0a0a0b;
+    --bg-surface: #111114;
+    --bg-elevated: #18181d;
+    --bg-card: #1e1e26;
+    --bg-hover: #242430;
+    --border: rgba(255, 255, 255, 0.07);
+    --border-hover: rgba(255, 255, 255, 0.14);
+    --text-primary: #f0eff5;
+    --text-secondary: #8b8a99;
+    --text-muted: #4d4c5a;
+    --accent: #7b6ef6;
+    --accent-glow: rgba(123, 110, 246, 0.2);
+    --accent-dim: #4a3fa0;
+    --green: #3ecf8e;
+    --amber: #f5a623;
+    --red: #f06a6a;
+  }
+}
+
 
 body {
   background: var(--bg-base);
@@ -3610,3 +3673,127 @@ body {
 .lightbox-close:hover {
   transform: scale(1.1);
 }
+
+/* ===== LONG PRESS ACTION DIALOG ===== */
+.longpress-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 10, 11, 0.85);
+  backdrop-filter: blur(8px);
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: fadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.longpress-modal-content {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-hover);
+  border-radius: 16px;
+  width: 100%;
+  max-width: 400px;
+  padding: 28px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5), 0 0 0 1px var(--border);
+  transform: scale(0.96);
+  animation: scaleIn 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.longpress-modal-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.longpress-modal-icon {
+  font-size: 24px;
+}
+
+.longpress-modal-title {
+  font-family: var(--font-head);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.longpress-modal-desc {
+  font-size: 13.5px;
+  color: var(--text-secondary);
+  margin: 0 0 24px;
+  line-height: 1.5;
+}
+
+.longpress-modal-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.longpress-modal-actions button {
+  width: 100%;
+  padding: 12px;
+  border-radius: 10px;
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.btn-longpress-open {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+}
+
+.btn-longpress-open:hover {
+  background: #6c5ce7;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(123, 110, 246, 0.25);
+}
+
+.btn-longpress-delete {
+  background: rgba(240, 106, 106, 0.1);
+  border: 1px solid rgba(240, 106, 106, 0.25);
+  color: var(--red);
+}
+
+.btn-longpress-delete:hover {
+  background: var(--red);
+  color: #fff;
+  border-color: var(--red);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(240, 106, 106, 0.25);
+}
+
+.btn-longpress-cancel {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+}
+
+.btn-longpress-cancel:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  border-color: var(--border-hover);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scaleIn {
+  from { transform: scale(0.96); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}

@@ -635,7 +635,7 @@ export default function Landing({ onBack, onNavigate, onGetStarted }) {
                     <li>✓ Code generation</li>
                     <li>✓ Community access</li>
                   </ul>
-                  <button className="btn-plan btn-secondary" onClick={() => { setShowPricing(false); handleGetStarted(); }}>Get Started</button>
+                  <button className="btn-plan btn-secondary" onClick={() => { setShowPricing(false); handleLogin(); }}>Get Started</button>
                 </div>
                 
                 <div className="landing-price-card highlighted">
@@ -652,7 +652,7 @@ export default function Landing({ onBack, onNavigate, onGetStarted }) {
                     <li>✓ Image generation</li>
                     <li>✓ Custom domains</li>
                   </ul>
-                  <button className="btn-plan btn-primary" onClick={() => { setShowPricing(false); handleGetStarted(); }}>Upgrade to Pro</button>
+                  <button className="btn-plan btn-primary" onClick={() => { setShowPricing(false); handleLogin(); }}>Upgrade to Pro</button>
                 </div>
 
                 <div className="landing-price-card">
@@ -667,7 +667,7 @@ export default function Landing({ onBack, onNavigate, onGetStarted }) {
                     <li>✓ Team collaboration spaces</li>
                     <li>✓ Shared credit pools</li>
                   </ul>
-                  <button className="btn-plan btn-secondary" onClick={() => { setShowPricing(false); handleGetStarted(); }}>Upgrade to Max</button>
+                  <button className="btn-plan btn-secondary" onClick={() => { setShowPricing(false); handleLogin(); }}>Upgrade to Max</button>
                 </div>
               </div>
             ) : (
@@ -678,7 +678,7 @@ export default function Landing({ onBack, onNavigate, onGetStarted }) {
                     <div className="credit-price">$5</div>
                   </div>
                   <p className="credit-desc">Perfect for occasional experiments and small projects.</p>
-                  <button className="btn-plan btn-secondary" onClick={() => { setShowPricing(false); handleGetStarted(); }}>Buy Pack</button>
+                  <button className="btn-plan btn-secondary" onClick={() => { setShowPricing(false); handleLogin(); }}>Buy Pack</button>
                 </div>
                 <div className="landing-credit-card highlighted">
                   <div className="price-badge">POPULAR</div>
@@ -687,7 +687,7 @@ export default function Landing({ onBack, onNavigate, onGetStarted }) {
                     <div className="credit-price">$15</div>
                   </div>
                   <p className="credit-desc">Best value for expanding design ideas and rapid iterations.</p>
-                  <button className="btn-plan btn-primary" onClick={() => { setShowPricing(false); handleGetStarted(); }}>Buy Pack</button>
+                  <button className="btn-plan btn-primary" onClick={() => { setShowPricing(false); handleLogin(); }}>Buy Pack</button>
                 </div>
                 <div className="landing-credit-card">
                   <div className="credit-header">
@@ -695,7 +695,7 @@ export default function Landing({ onBack, onNavigate, onGetStarted }) {
                     <div className="credit-price">$35</div>
                   </div>
                   <p className="credit-desc">High capacity for continuous generation and export.</p>
-                  <button className="btn-plan btn-secondary" onClick={() => { setShowPricing(false); handleGetStarted(); }}>Buy Pack</button>
+                  <button className="btn-plan btn-secondary" onClick={() => { setShowPricing(false); handleLogin(); }}>Buy Pack</button>
                 </div>
               </div>
             )}

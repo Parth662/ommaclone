@@ -53,6 +53,10 @@ const chatSchema = new mongoose.Schema({
     default: "/grimoire_3d_thumbnail.png",
   },
   messages: [messageSchema],
+  isDeleted: {
+    type: Boolean,
+    default: false,
+  },
   createdAt: {
     type: Date,
     default: Date.now,

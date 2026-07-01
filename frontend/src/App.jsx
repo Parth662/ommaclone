@@ -13,7 +13,6 @@ import Community from "./pages/Community.jsx";
 import Components from "./pages/Components.jsx";
 import Search from "./pages/Search.jsx";
 import Login from "./pages/Login.jsx";
-import Signup from "./pages/Signup.jsx";
 import Profile from "./pages/Profile.jsx";
 import Settings from "./pages/Settings.jsx";
 import Trash from "./pages/Trash.jsx";
@@ -31,7 +30,6 @@ const PAGE_TITLES = {
   chat: "Chat",
   docs: "Documentation",
   login: "Login",
-  signup: "Sign Up",
   profile: "My Profile",
   settings: "Settings",
   trash: "Trash",
@@ -119,6 +117,7 @@ export default function App() {
   const [chatOpen, setChatOpen] = useState(false);
   const [chatMessages, setChatMessages] = useState([]);
   const [userEmail, setUserEmail] = useState("guest@omma.build");
+  const [userFullName, setUserFullName] = useState("");
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [isPro, setIsPro] = useState(false);
   const [credits, setCredits] = useState({ chat: 25, project: 25, limit: 25 });
@@ -134,12 +133,16 @@ export default function App() {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (response.data.success) {
-        const { credits: remaining, dailyLimit } = response.data.user;
+        const { credits: remaining, dailyLimit, settings, fullName } = response.data.user;
         setCredits({
           chat: remaining !== undefined ? remaining : 25,
           project: remaining !== undefined ? remaining : 25,
           limit: dailyLimit !== undefined ? dailyLimit : 25
         });
+        setUserFullName(fullName || "");
+        const themeVal = settings?.theme || "default";
+        localStorage.setItem("theme", themeVal);
+        document.documentElement.setAttribute("data-theme", themeVal);
       }
     } catch (err) {
       console.error("Error fetching credits:", err);
@@ -162,6 +165,9 @@ export default function App() {
   };
 
   React.useEffect(() => {
+    const initialTheme = localStorage.getItem("theme") || "default";
+    document.documentElement.setAttribute("data-theme", initialTheme);
+
     const token = localStorage.getItem("token");
     const email = localStorage.getItem("userEmail");
     if (token && email) {
@@ -362,10 +368,28 @@ export default function App() {
     }
   };
 
+  const handleDeleteChat = async (chatId) => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) return false;
+      const response = await axios.delete(`${API_BASE_URL}/chats/${chatId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (response.data.success) {
+        fetchRecentChats();
+        return true;
+      }
+    } catch (err) {
+      console.error("Error deleting chat:", err);
+      alert("Failed to delete chat.");
+    }
+    return false;
+  };
+
   const currentTitle = chatOpen ? PAGE_TITLES.chat : PAGE_TITLES[activePage] || "Discover";
 
   const isLoggedIn = !!localStorage.getItem("token");
-  const publicPages = ["landing", "login", "signup", "docs"];
+  const publicPages = ["landing", "login", "docs"];
 
   // Auth Guard: Redirect to landing page if user is not authenticated and attempts to access private pages
   if (!isLoggedIn && !publicPages.includes(activePage)) {
@@ -373,7 +397,7 @@ export default function App() {
       <Landing
         onNavigate={handleNavigate}
         onBack={() => handleNavigate("login")}
-        onGetStarted={() => handleNavigate("signup")}
+        onGetStarted={() => handleNavigate("login")}
       />
     );
   }
@@ -385,7 +409,7 @@ export default function App() {
       <Landing
         onNavigate={handleNavigate}
         onBack={() => handleNavigate("login")}
-        onGetStarted={() => handleNavigate("signup")}
+        onGetStarted={() => handleNavigate("login")}
       />
     );
   }
@@ -404,22 +428,6 @@ export default function App() {
           fetchRecentChats();
         }}
         onBack={() => handleNavigate("landing")}
-        onNavigateSignup={() => handleNavigate("signup")}
-      />
-    );
-  }
-
-  if (activePage === "signup" && !chatOpen) {
-    return (
-      <Signup
-        onSignupSuccess={(email) => {
-          setUserEmail(email || "guest@omma.build");
-          handleNavigate("discover");
-          fetchCredits();
-          fetchRecentChats();
-        }}
-        onBack={() => handleNavigate("landing")}
-        onNavigateLogin={() => handleNavigate("login")}
       />
     );
   }
@@ -444,7 +452,9 @@ export default function App() {
         activePage={chatOpen ? "chat" : activePage}
         onNavigate={handleNavigate}
         onOpenChat={handleOpenChat}
+        onDeleteChat={handleDeleteChat}
         userEmail={userEmail}
+        userFullName={userFullName}
         isPro={isPro}
         onUpgrade={() => setShowUpgrade(true)}
         chatCredits={credits.chat}
@@ -480,13 +490,25 @@ export default function App() {
                 onNavigateCommunity={() => handleNavigate("community")}
               />
             )}
-            {activePage === "chats" && <MyChats onOpenChat={handleOpenChat} />}
+            {activePage === "chats" && (
+              <MyChats 
+                onOpenChat={handleOpenChat} 
+                onDeleteChat={handleDeleteChat}
+              />
+            )}
             {activePage === "community" && <Community onOpenChat={handleOpenChat} />}
             {activePage === "components" && <Components onOpenChat={handleOpenChat} />}
             {activePage === "search" && <Search onOpenChat={handleOpenChat} />}
-            {activePage === "settings" && <Settings userEmail={userEmail} />}
+            {activePage === "settings" && (
+              <Settings 
+                userEmail={userEmail} 
+                onProfileUpdate={fetchCredits} 
+              />
+            )}
             {activePage === "notifications" && <Notifications />}
-            {activePage === "trash" && <Trash />}
+            {activePage === "trash" && (
+              <Trash onRestore={fetchRecentChats} />
+            )}
             {activePage === "createteam" && (
               <CreateTeam
                 userEmail={userEmail}

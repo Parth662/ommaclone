@@ -32,7 +32,7 @@ router.get("/", verifyToken, async (req, res) => {
       return res.status(404).json({ success: false, message: "User not found." });
     }
 
-    const chats = await Chat.find({ user: user._id })
+    const chats = await Chat.find({ user: user._id, isDeleted: { $ne: true } })
       .select("title favorite image createdAt updatedAt messages")
       .sort({ updatedAt: -1 });
 
@@ -49,6 +49,54 @@ router.get("/", verifyToken, async (req, res) => {
   } catch (error) {
     console.error("Error in GET /chats:", error);
     return res.status(500).json({ success: false, message: "Failed to retrieve chats.", error: error.message, stack: error.stack });
+  }
+});
+
+/**
+ * @route   GET /chats/trash
+ * @desc    Get all soft-deleted chats in trash.
+ */
+router.get("/trash", verifyToken, async (req, res) => {
+  try {
+    const user = await User.findOne({ email: req.user.email });
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found." });
+    }
+
+    const chats = await Chat.find({ user: user._id, isDeleted: true })
+      .select("title favorite image createdAt updatedAt messages")
+      .sort({ updatedAt: -1 });
+
+    const formattedChats = chats.map(chat => ({
+      id: chat._id,
+      title: chat.title,
+      type: "chat",
+      deletedAt: chat.updatedAt.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+    }));
+
+    return res.status(200).json({ success: true, items: formattedChats });
+  } catch (error) {
+    console.error("Error in GET /chats/trash:", error);
+    return res.status(500).json({ success: false, message: "Failed to retrieve trash chats.", error: error.message });
+  }
+});
+
+/**
+ * @route   DELETE /chats/trash/empty
+ * @desc    Permanently delete all soft-deleted chats.
+ */
+router.delete("/trash/empty", verifyToken, async (req, res) => {
+  try {
+    const user = await User.findOne({ email: req.user.email });
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found." });
+    }
+
+    await Chat.deleteMany({ user: user._id, isDeleted: true });
+    return res.status(200).json({ success: true, message: "Trash emptied successfully." });
+  } catch (error) {
+    console.error("Error in DELETE /chats/trash/empty:", error);
+    return res.status(500).json({ success: false, message: "Failed to empty trash.", error: error.message });
   }
 });
 
@@ -149,16 +197,58 @@ router.put("/:id", verifyToken, async (req, res) => {
  * @route   DELETE /chats/:id
  * @desc    Delete a chat.
  */
+/**
+ * @route   PUT /chats/:id/restore
+ * @desc    Restore a soft-deleted chat.
+ */
+router.put("/:id/restore", verifyToken, async (req, res) => {
+  try {
+    const chat = await Chat.findById(req.params.id);
+    if (!chat) {
+      return res.status(404).json({ success: false, message: "Chat not found." });
+    }
+    chat.isDeleted = false;
+    await chat.save();
+    return res.status(200).json({ success: true, message: "Chat restored successfully.", chat });
+  } catch (error) {
+    console.error("Error in PUT /chats/:id/restore:", error);
+    return res.status(500).json({ success: false, message: "Failed to restore chat.", error: error.message });
+  }
+});
+
+/**
+ * @route   DELETE /chats/:id
+ * @desc    Soft-delete a chat (move to trash).
+ */
 router.delete("/:id", verifyToken, async (req, res) => {
+  try {
+    const chat = await Chat.findById(req.params.id);
+    if (!chat) {
+      return res.status(404).json({ success: false, message: "Chat not found." });
+    }
+    chat.isDeleted = true;
+    await chat.save();
+    return res.status(200).json({ success: true, message: "Chat moved to trash successfully." });
+  } catch (error) {
+    console.error("Error in DELETE /chats/:id:", error);
+    return res.status(500).json({ success: false, message: "Failed to move chat to trash.", error: error.message });
+  }
+});
+
+/**
+ * @route   DELETE /chats/:id/forever
+ * @desc    Permanently delete a chat.
+ */
+router.delete("/:id/forever", verifyToken, async (req, res) => {
   try {
     const result = await Chat.deleteOne({ _id: req.params.id });
     if (result.deletedCount === 0) {
       return res.status(404).json({ success: false, message: "Chat not found." });
     }
-    return res.status(200).json({ success: true, message: "Chat deleted successfully." });
+    return res.status(200).json({ success: true, message: "Chat permanently deleted." });
   } catch (error) {
-    console.error("Error in DELETE /chats/:id:", error);
-    return res.status(500).json({ success: false, message: "Failed to delete chat.", error: error.message, stack: error.stack });
+    console.error("Error in DELETE /chats/:id/forever:", error);
+    return res.status(500).json({ success: false, message: "Failed to permanently delete chat.", error: error.message });
   }
 });
 

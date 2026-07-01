@@ -6,7 +6,7 @@ import axios from "axios";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5001";
 
-export default function Login({ onLoginSuccess, onBack, onNavigateSignup }) {
+export default function Login({ onLoginSuccess, onBack }) {
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
@@ -587,19 +587,6 @@ export default function Login({ onLoginSuccess, onBack, onNavigateSignup }) {
                     Login by Google
                   </button>
 
-                  {/* ── Sign up redirect — mirrors Signup page's "Already have an account?" line ── */}
-                  <p className="login-redirect">
-                    Don't have an account?{" "}
-                    <span
-                      className="login-redirect-link"
-                      onClick={() => onNavigateSignup && onNavigateSignup()}
-                      role="button"
-                      tabIndex={0}
-                      onKeyDown={(e) => e.key === "Enter" && onNavigateSignup && onNavigateSignup()}
-                    >
-                      Sign up
-                    </span>
-                  </p>
                 </>
               ) : (
                 <>

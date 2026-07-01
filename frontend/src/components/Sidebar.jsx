@@ -8,11 +8,41 @@ const NAV_ITEMS = [
   { icon: "🔍", label: "Search", page: "search" },
 ];
 
-export default function Sidebar({ activePage, onNavigate, onOpenChat, onUpgrade, isPro = false, userEmail = "guest@omma.build", chatCredits = 500, projectCredits = 100, recentChats = [] }) {
+export default function Sidebar({ activePage, onNavigate, onOpenChat, onDeleteChat, onUpgrade, isPro = false, userEmail = "guest@omma.build", userFullName = "", chatCredits = 500, projectCredits = 100, recentChats = [] }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const popoverRef = useRef(null);
 
-  const displayName = userEmail.split("@")[0];
+  const [longPressedChat, setLongPressedChat] = useState(null);
+  const timerRef = useRef(null);
+  const isLongPressRef = useRef(false);
+
+  const handleStart = (chat) => {
+    isLongPressRef.current = false;
+    timerRef.current = setTimeout(() => {
+      isLongPressRef.current = true;
+      setLongPressedChat(chat);
+    }, 600);
+  };
+
+  const handleEnd = (chat, onClickAction) => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    if (!isLongPressRef.current) {
+      onClickAction();
+    }
+  };
+
+  const handleCancel = () => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+  };
+
+  const handleDelete = async (chatId) => {
+    const success = await onDeleteChat?.(chatId);
+    if (success) {
+      setLongPressedChat(null);
+    }
+  };
+
+  const displayName = userFullName || userEmail.split("@")[0];
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -67,7 +97,13 @@ export default function Sidebar({ activePage, onNavigate, onOpenChat, onUpgrade,
             <div
               key={chat.id}
               className="recent-chat-item"
-              onClick={() => onOpenChat(chat.id)}
+              onMouseDown={() => handleStart(chat)}
+              onMouseUp={() => handleEnd(chat, () => onOpenChat(chat.id))}
+              onMouseLeave={handleCancel}
+              onTouchStart={() => handleStart(chat)}
+              onTouchEnd={() => handleEnd(chat, () => onOpenChat(chat.id))}
+              onTouchMove={handleCancel}
+              style={{ cursor: "pointer", userSelect: "none" }}
             >
               <div className="recent-chat-title">{chat.title}</div>
               <div className="recent-chat-sub">{chat.messagesCount} messages · {chat.timeAgo}</div>
@@ -195,6 +231,43 @@ export default function Sidebar({ activePage, onNavigate, onOpenChat, onUpgrade,
           <span className="profile-chevron">↕</span>
         </div>
       </div>
+
+      {longPressedChat && (
+        <div className="longpress-modal-backdrop" onClick={() => setLongPressedChat(null)}>
+          <div className="longpress-modal-content glass-panel" onClick={(e) => e.stopPropagation()}>
+            <div className="longpress-modal-header">
+              <span className="longpress-modal-icon">💬</span>
+              <h3 className="longpress-modal-title">{longPressedChat.title}</h3>
+            </div>
+            <p className="longpress-modal-desc">
+              Select an action for this chat session.
+            </p>
+            <div className="longpress-modal-actions">
+              <button 
+                className="btn-longpress-open"
+                onClick={() => {
+                  onOpenChat(longPressedChat.id || longPressedChat._id);
+                  setLongPressedChat(null);
+                }}
+              >
+                <span>🚀 Open Chat</span>
+              </button>
+              <button 
+                className="btn-longpress-delete"
+                onClick={() => handleDelete(longPressedChat.id || longPressedChat._id)}
+              >
+                <span>🗑️ Delete Chat</span>
+              </button>
+              <button 
+                className="btn-longpress-cancel"
+                onClick={() => setLongPressedChat(null)}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </aside>
   );
 }

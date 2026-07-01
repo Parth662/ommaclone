@@ -1,13 +1,44 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5001";
 
-export default function MyChats({ onOpenChat }) {
+export default function MyChats({ onOpenChat, onDeleteChat }) {
   const [chats, setChats] = useState([]);
   const [activeTab, setActiveTab] = useState("chats"); // "chats" or "favorites"
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
+
+  const [longPressedChat, setLongPressedChat] = useState(null);
+  const timerRef = useRef(null);
+  const isLongPressRef = useRef(false);
+
+  const handleStart = (chat) => {
+    isLongPressRef.current = false;
+    timerRef.current = setTimeout(() => {
+      isLongPressRef.current = true;
+      setLongPressedChat(chat);
+    }, 600);
+  };
+
+  const handleEnd = (chat, onClickAction) => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    if (!isLongPressRef.current) {
+      onClickAction();
+    }
+  };
+
+  const handleCancel = () => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+  };
+
+  const handleDelete = async (chatId) => {
+    const success = await onDeleteChat?.(chatId);
+    if (success) {
+      setChats(prev => prev.filter(c => c.id !== chatId));
+      setLongPressedChat(null);
+    }
+  };
 
   useEffect(() => {
     const fetchChats = async () => {
@@ -171,7 +202,13 @@ export default function MyChats({ onOpenChat }) {
               <div
                 key={chat.id}
                 className="mychats-card"
-                onClick={() => onOpenChat(chat.id)}
+                onMouseDown={() => handleStart(chat)}
+                onMouseUp={() => handleEnd(chat, () => onOpenChat(chat.id))}
+                onMouseLeave={handleCancel}
+                onTouchStart={() => handleStart(chat)}
+                onTouchEnd={() => handleEnd(chat, () => onOpenChat(chat.id))}
+                onTouchMove={handleCancel}
+                style={{ cursor: "pointer", userSelect: "none" }}
               >
                 <div className="mychats-card-thumb">
                   <img
@@ -215,6 +252,43 @@ export default function MyChats({ onOpenChat }) {
           </div>
         )}
       </main>
+
+      {longPressedChat && (
+        <div className="longpress-modal-backdrop" onClick={() => setLongPressedChat(null)}>
+          <div className="longpress-modal-content glass-panel" onClick={(e) => e.stopPropagation()}>
+            <div className="longpress-modal-header">
+              <span className="longpress-modal-icon">💬</span>
+              <h3 className="longpress-modal-title">{longPressedChat.title}</h3>
+            </div>
+            <p className="longpress-modal-desc">
+              Select an action for this chat session.
+            </p>
+            <div className="longpress-modal-actions">
+              <button 
+                className="btn-longpress-open"
+                onClick={() => {
+                  onOpenChat(longPressedChat.id || longPressedChat._id);
+                  setLongPressedChat(null);
+                }}
+              >
+                <span>🚀 Open Chat</span>
+              </button>
+              <button 
+                className="btn-longpress-delete"
+                onClick={() => handleDelete(longPressedChat.id || longPressedChat._id)}
+              >
+                <span>🗑️ Delete Chat</span>
+              </button>
+              <button 
+                className="btn-longpress-cancel"
+                onClick={() => setLongPressedChat(null)}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

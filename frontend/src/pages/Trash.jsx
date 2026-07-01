@@ -1,48 +1,101 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import axios from "axios";
 
-const MOCK_TRASH = [
-  {
-    id: 1,
-    title: "Enchanted AI Grimoire 3D",
-    type: "chat",
-    deletedAt: "Jun 7, 2026",
-  },
-  {
-    id: 2,
-    title: "Landing Page Component",
-    type: "component",
-    deletedAt: "Jun 5, 2026",
-  },
-  {
-    id: 3,
-    title: "Dark Mode Toggle",
-    type: "component",
-    deletedAt: "Jun 3, 2026",
-  },
-];
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5001";
 
-export default function Trash() {
-  const [items, setItems] = useState(MOCK_TRASH);
+export default function Trash({ onRestore }) {
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [hoveredId, setHoveredId] = useState(null);
   const [confirmEmpty, setConfirmEmpty] = useState(false);
 
-  const handleRestore = (id) => {
-    setItems((prev) => prev.filter((item) => item.id !== id));
+  const fetchTrash = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        setLoading(false);
+        return;
+      }
+      const response = await axios.get(`${API_BASE_URL}/chats/trash`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (response.data.success) {
+        setItems(response.data.items || []);
+      }
+    } catch (err) {
+      console.error("Error fetching trash:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleDeletePermanently = (id) => {
-    setItems((prev) => prev.filter((item) => item.id !== id));
+  useEffect(() => {
+    fetchTrash();
+  }, []);
+
+  const handleRestore = async (id) => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await axios.put(`${API_BASE_URL}/chats/${id}/restore`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (response.data.success) {
+        setItems((prev) => prev.filter((item) => item.id !== id));
+        onRestore?.();
+      }
+    } catch (err) {
+      console.error("Error restoring chat:", err);
+      alert("Failed to restore chat.");
+    }
   };
 
-  const handleEmptyTrash = () => {
+  const handleDeletePermanently = async (id) => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await axios.delete(`${API_BASE_URL}/chats/${id}/forever`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (response.data.success) {
+        setItems((prev) => prev.filter((item) => item.id !== id));
+      }
+    } catch (err) {
+      console.error("Error permanently deleting chat:", err);
+      alert("Failed to delete chat permanently.");
+    }
+  };
+
+  const handleEmptyTrash = async () => {
     if (confirmEmpty) {
-      setItems([]);
+      try {
+        const token = localStorage.getItem("token");
+        const response = await axios.delete(`${API_BASE_URL}/chats/trash/empty`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (response.data.success) {
+          setItems([]);
+        }
+      } catch (err) {
+        console.error("Error emptying trash:", err);
+        alert("Failed to empty trash.");
+      }
       setConfirmEmpty(false);
     } else {
       setConfirmEmpty(true);
       setTimeout(() => setConfirmEmpty(false), 3000);
     }
   };
+
+  if (loading) {
+    return (
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "calc(100vh - 64px)", background: "var(--bg-base)" }}>
+        <div className="auth-spinner">
+          <div className="spinner-outer" />
+          <div className="spinner-inner" />
+          <span className="spinner-icon">⚡</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div

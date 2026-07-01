@@ -154,13 +154,13 @@ function GeneralTab({ userData, onSave }) {
 }
 
 function AppearanceTab({ userData, onSave }) {
-  const [theme, setTheme] = useState(userData?.settings?.theme || "dark");
+  const [theme, setTheme] = useState(userData?.settings?.theme || "default");
   const [fontSize, setFontSize] = useState(userData?.settings?.fontSize || "medium");
   const [codeFont, setCodeFont] = useState(userData?.settings?.codeFont || "System Mono");
 
   useEffect(() => {
     if (userData) {
-      setTheme(userData.settings?.theme || "dark");
+      setTheme(userData.settings?.theme || "default");
       setFontSize(userData.settings?.fontSize || "medium");
       setCodeFont(userData.settings?.codeFont || "System Mono");
     }
@@ -168,6 +168,8 @@ function AppearanceTab({ userData, onSave }) {
 
   const changeTheme = (val) => {
     setTheme(val);
+    localStorage.setItem("theme", val);
+    document.documentElement.setAttribute("data-theme", val);
     onSave({
       settings: {
         smartRouting: userData?.settings?.smartRouting || false,
@@ -214,9 +216,9 @@ function AppearanceTab({ userData, onSave }) {
         <div style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 12 }}>Theme</div>
         <div style={{ display: "flex", gap: 10 }}>
           {[
+            { id: "light", label: "Light", bg: "#ffffff" },
             { id: "dark", label: "Dark", bg: "#0a0a0b" },
-            { id: "darker", label: "Darker", bg: "#050507" },
-            { id: "midnight", label: "Midnight", bg: "#0d1117" },
+            { id: "default", label: "Default", bg: "linear-gradient(135deg, #ffffff 50%, #0a0a0b 50%)" },
           ].map(t => (
             <div key={t.id} style={{ textAlign: "center" }}>
               <div
@@ -232,7 +234,7 @@ function AppearanceTab({ userData, onSave }) {
                 }}
               >
                 <div style={{ width: 30, height: 3, borderRadius: 2, background: "var(--accent)", opacity: 0.8 }} />
-                <div style={{ width: 22, height: 2, borderRadius: 2, background: "rgba(255,255,255,0.15)" }} />
+                <div style={{ width: 22, height: 2, borderRadius: 2, background: t.id === "light" ? "rgba(0,0,0,0.15)" : "rgba(255,255,255,0.15)" }} />
               </div>
               <div style={{ fontSize: 11.5, color: theme === t.id ? "var(--text-primary)" : "var(--text-muted)" }}>{t.label}</div>
             </div>
@@ -424,7 +426,7 @@ function ReferralsTab({ userEmail }) {
   );
 }
 
-export default function Settings({ userEmail }) {
+export default function Settings({ userEmail, onProfileUpdate }) {
   const [activeTab, setActiveTab] = useState("general");
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -462,6 +464,12 @@ export default function Settings({ userEmail }) {
       });
       if (response.data.success) {
         setUserData(response.data.user);
+        const savedTheme = response.data.user.settings?.theme;
+        if (savedTheme) {
+          localStorage.setItem("theme", savedTheme);
+          document.documentElement.setAttribute("data-theme", savedTheme);
+        }
+        if (onProfileUpdate) onProfileUpdate();
         return true;
       }
     } catch (err) {
